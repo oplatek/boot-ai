@@ -19,29 +19,11 @@
 
 </head>
 <body role="document">
-
-
-    <!-- TODO skipped in the labels of the columns in Grid-->
-    <!-- <div class="column&#45;header"> -->
-    <!--   <h3>Select Reasons</h3>   -->
-    <!-- </div> -->
-    <!-- <div class="column&#45;header"> -->
-    <!--   <h3>Select the Best Action</h3> -->
-    <!-- </div> -->
-    <!-- TODO form submission  and div
-          <Div>
-            <div class="form-group">
-                <label for="new_action">Your proposal if above actions are not applicable:</label>
-                  <textarea class="form-control" rows="5" id="new_action">You can use # for database entities and e.g. @user1 for selecting reasons"</textarea>
-            </div>
-          </Div>
-    -->
-    <!-- <div class="column&#45;header"> -->
-    <!--   <h3>Find and Mark Info</h3>   -->
-    <!-- </div> -->
-
   <!-- TODO not round corners of menu. See theme menu getbootrap there it is well rendered. -->
   <div id="todo1"></div>
+  <noscript>
+    <a href="https://www.google.cz/webhp?q=how%20to%20enable%20javascript">You have JavaScript disabled. Please, turn it on and return to start playing.</a>
+  </noscript>
   <div class="container theme-showcase" role="main">
     <div id="todo2"></div>
     <div id="todo3"></div>
@@ -49,6 +31,8 @@
   </div>
 
 <script type="text/babel">
+
+// TODO create components which can dynamically display the json data.
 
 var Nav = ReactBootstrap.Nav;
 var NavItem = ReactBootstrap.NavItem;
@@ -125,6 +109,10 @@ const gridInstance = (
 
     <Row className="show-grid">
       <Col xs={4} md={4}>
+        // TODO skipped in the labels of the columns in Grid
+        // <div class="column-header">
+        //   <h3>Select Reasons</h3>  
+        // </div>
         <ListGroup>
           <ListGroupItem href="#" header="Assistant" text="" active>
             Todo generate dynamicly from the json
@@ -134,13 +122,27 @@ const gridInstance = (
         </ListGroup>
       </Col>
       <Col xs={4} md={4}>
+        // TODO skipped in the labels of the columns in Grid
+        // <div class="column-header">
+        //   <h3>Select the Best Action</h3>
+        // </div>
         <ListGroup>
           <ListGroupItem href="#" active>Todo generate dynamicly from the json</ListGroupItem>
           <ListGroupItem href="#">todo 2</ListGroupItem>
           <ListGroupItem href="#" disabled>todo - others disabled  3</ListGroupItem>
         </ListGroup>
+        // TODO "form for submitting new actions"
+        // <div class="form-group">
+        //     <label for="new_action">Your proposal if above actions are not applicable:</label>
+        //       <textarea class="form-control" rows="5" id="new_action">You can use # for database entities and e.g. @user1 for selecting reasons"</textarea>
+        // </div>
       </Col>
       <Col xs={4} md={4}>
+        // TODO skipped in the labels of the columns in Grid
+        // <div class="column-header">
+        //   <h3>Find and Mark Info</h3>
+        // </div>
+
         <Table hover>
             <thead>
               <tr>

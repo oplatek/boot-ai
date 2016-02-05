@@ -11,11 +11,11 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='action-selection.css') }}">
 
-
     <script src="{{ url_for('static', filename='lib/react.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/react-dom.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/browser.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/react-bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/jquery.js') }}"></script>
 
 </head>
 <body role="document">
@@ -24,168 +24,13 @@
   <noscript>
     <a href="https://www.google.cz/webhp?q=how%20to%20enable%20javascript">You have JavaScript disabled. Please, turn it on and return to start playing.</a>
   </noscript>
-  <div class="container theme-showcase" role="main">
+
+  <div className="container theme-showcase" role="main">
     <div id="todo2"></div>
     <div id="todo3"></div>
     <div id="todo4"></div>
   </div>
-
-<script type="text/babel">
-
-// TODO create components which can dynamically display the json data.
-
-var Nav = ReactBootstrap.Nav;
-var NavItem = ReactBootstrap.NavItem;
-var Navbar = ReactBootstrap.Navbar;
-var NavDropdown = ReactBootstrap.NavDropdown;
-var MenuItem = ReactBootstrap.MenuItem;
-var Table = ReactBootstrap.Table;
-var ListGroup = ReactBootstrap.ListGroup;
-var ListGroupItem = ReactBootstrap.ListGroupItem;
-var ListGroupItemText = ReactBootstrap.ListGroupItemText;
-var ProgressBar = ReactBootstrap.ProgressBar;
-var Alert = ReactBootstrap.Alert;
-var Grid = ReactBootstrap.Grid;
-var Row = ReactBootstrap.Row;
-var Col = ReactBootstrap.Col;
-
-// TODO load the data
-var history = [ 
-    {id:0, value: "Good morning. How may I help you?", reason: false, author: "id-you"},
-    {id:1, value: "I would like to know what is the nearest Sweet shop near Fisherman's wharf?", reason: false, author: "id-other-1"},
-    {id:2, value: "Give me few seconds. I will look it up.", reason: false, author: "id-you"},
-    {id:3, value: "Sure", reason: false, author: "id-other-2"},
-    {id:4, value: "Select new action from the options and mark at least one from the actions above as reasons why you have chosen that action", reason: false, author: "id-you"}
-    ];
-
-// TODO load the data
-var actions = [ {id:1, value: "Give me a bit more time...", selected: false, author: "crowd-1"},
-    {id:2, value: "I am sorry, I do not have enough information to answer.", selected: false, author: "crowd-1"},
-    {id:3, value: "I found many options would you like to hear few examples?", selected: false, author: "crowd-1"},
-    {id:4, value: "Great! I love sweets!", selected: false, author: "crowd-1"}
-    ];
-
-
-
-const navbarInstance = (
-  <Navbar inverse fixed-top>
-    <Navbar.Header>
-      <Navbar.Brand>
-        <a href="#">Boot-AI</a>
-      </Navbar.Brand>
-    </Navbar.Header>
-    <Nav>
-      <NavItem eventKey={1} href="#" active>Return to Crowdflower</NavItem>
-      <NavDropdown eventKey={3} title="Help" id="basic-nav-dropdown">
-        <MenuItem eventKey={3.1}>Point Scoring</MenuItem>
-        <MenuItem eventKey={3.2}>Recommended Strategy</MenuItem>
-        <MenuItem eventKey={3.3}>Task Description</MenuItem>
-        <MenuItem divider />
-        <MenuItem eventKey={3.4}>Top Scores</MenuItem>
-        <MenuItem eventKey={3.5}>See dialogues examples</MenuItem>
-      </NavDropdown>
-    </Nav>
-  </Navbar>
-);
-
-const progressInstance = (
-  <ProgressBar>
-    <ProgressBar striped bsStyle="success" now={35} key={1} />
-    <ProgressBar bsStyle="warning" now={20} key={2} />
-    <ProgressBar active bsStyle="danger" now={10} key={3} />
-  </ProgressBar>
-);
-
-
-const alertInstance = (
-  <Alert bsStyle="success">
-    <strong>Great!</strong> You and two other people agreed to choose action 3.
-  </Alert>
-);
-
-
-const gridInstance = (
-  <Grid>
-
-    <Row className="show-grid">
-      <Col xs={4} md={4}>
-        // TODO skipped in the labels of the columns in Grid
-        // <div class="column-header">
-        //   <h3>Select Reasons</h3>  
-        // </div>
-        <ListGroup>
-          <ListGroupItem href="#" header="Assistant" text="" active>
-            Todo generate dynamicly from the json
-          </ListGroupItem>
-          <ListGroupItem href="#" header="You">todo 2</ListGroupItem>
-          <ListGroupItem header="Assistant" disabled active>Select new action from the options and mark at least one from the actions above as reasons why you have chosen that action  3</ListGroupItem>
-        </ListGroup>
-      </Col>
-      <Col xs={4} md={4}>
-        // TODO skipped in the labels of the columns in Grid
-        // <div class="column-header">
-        //   <h3>Select the Best Action</h3>
-        // </div>
-        <ListGroup>
-          <ListGroupItem href="#" active>Todo generate dynamicly from the json</ListGroupItem>
-          <ListGroupItem href="#">todo 2</ListGroupItem>
-          <ListGroupItem href="#" disabled>todo - others disabled  3</ListGroupItem>
-        </ListGroup>
-        // TODO "form for submitting new actions"
-        // <div class="form-group">
-        //     <label for="new_action">Your proposal if above actions are not applicable:</label>
-        //       <textarea class="form-control" rows="5" id="new_action">You can use # for database entities and e.g. @user1 for selecting reasons"</textarea>
-        // </div>
-      </Col>
-      <Col xs={4} md={4}>
-        // TODO skipped in the labels of the columns in Grid
-        // <div class="column-header">
-        //   <h3>Find and Mark Info</h3>
-        // </div>
-
-        <Table hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Restaurant</th>
-                <th>Price Range</th>
-                <th>Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>Ask</td>
-                <td>Medium</td>
-                <td>12 Bridge St, Cambridge</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Pizza place</td>
-                <td>Cheap</td>
-                <td>3 Churchill St, Cambridge</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>Kebab place</td>
-                <td>Cheap</td>
-                <td>Queen Mary Sq, Cambridge</td>
-              </tr>
-            </tbody>
-          </Table>
-      </Col>
-    </Row>
-
-  </Grid>
-);
-
-
-
-ReactDOM.render(navbarInstance, document.getElementById('todo1'));
-ReactDOM.render(progressInstance, document.getElementById('todo2'));
-ReactDOM.render(alertInstance, document.getElementById('todo3'));
-ReactDOM.render(gridInstance, document.getElementById('todo4'));
-</script>
+  <script type="text/babel" src="{{ url_for('static', filename='assistant.js') }}"></script>
 
 </body>
 </html>

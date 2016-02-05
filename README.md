@@ -16,3 +16,4 @@ Todos & remarks
     - Select one from list http://stackoverflow.com/questions/27512180/reactjs-onclick-event-how-to-select-a-specific-button-from-a-list
 - Model - DB columns, different attention - I need to use columns
     - negative examples - distribute to (no one selected actions - 0 probability, selected action receives probability of changing the "future" - computed after dialogue using another & reversed RNN choosing only from the selected actions
+- login via https://github.com/gae-init/gae-init/blob/master/main/auth/auth.py

@@ -16,13 +16,14 @@
     <script src="{{ url_for('static', filename='lib/browser.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/react-bootstrap.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/socketio.js') }}"></script>
 
 </head>
 <body role="document">
   <!-- TODO not round corners of menu. See theme menu getbootrap there it is well rendered. -->
   <div id="todo1"></div>
   <noscript>
-    <a href="https://www.google.cz/webhp?q=how%20to%20enable%20javascript">You have JavaScript disabled. Please, turn it on and return to start playing.</a>
+    <a href="https://www.google.com/webhp?q=how%20to%20enable%20javascript">You have JavaScript disabled. Please, turn it on and return to start playing.</a>
   </noscript>
 
   <div className="container theme-showcase" role="main">
@@ -31,6 +32,10 @@
     <div id="todo4"></div>
   </div>
   <script type="text/babel" src="{{ url_for('static', filename='assistant.js') }}"></script>
-
+  <div>
+    Dialogue id: <a href="{{ dialog_url }}"><span id="dialog_id"> {{ dialog_id }}</span></a>
+    Role: <span id="role">{{ role }}</span>
+    Nickname: <span id="author"> {{author}} </span>
+  </div>
 </body>
 </html>

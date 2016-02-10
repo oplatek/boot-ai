@@ -48,7 +48,7 @@ const navbarInstance = (
         <MenuItem eventKey={3.3}>Task Description</MenuItem>
         <MenuItem divider />
         <MenuItem eventKey={3.4}>Top Scores</MenuItem>
-        <MenuItem eventKey={3.5}>See dialogues examples</MenuItem>
+        <MenuItem eventKey={3.5}>See dialogs examples</MenuItem>
       </NavDropdown>
     </Nav>
   </Navbar>
@@ -62,7 +62,7 @@ var MsgAnnouncer = React.createClass({
   },
   loadStatsFromServer: function() {
     $.ajax({
-      url: this.props.url  + '?' + 'dialogue_id=' + this.props.dialogue_id + '&' + 'stats=yes' + '&' + 'user_id=' + this.props.user_id,
+      url: this.props.url  + '/messages/dialog/' + this.props.dialog_id + '/user/' + this.props.user_id + '/turn/' + this.props.turn,
       dataType: 'json',
       cache: false,
       success: function(stats) {
@@ -77,7 +77,7 @@ var MsgAnnouncer = React.createClass({
   },
   loadMsgsFromServer: function() {
     $.ajax({
-      url: this.props.url + '?' +  'dialogue_id=' + this.props.dialogue_id + '&' + 'msgs=yes' + '&' + 'user_id=' + this.props.user_id,
+      url: this.props.url + '?' +  'dialog_id=' + this.props.dialog_id + '&' + 'msgs=yes' + '&' + 'user_id=' + this.props.user_id,
       dataType: 'json',
       cache: false,
       success: function(messages) {
@@ -184,5 +184,6 @@ const gridInstance = (
 
 
 ReactDOM.render(navbarInstance, document.getElementById('todo1'));
-ReactDOM.render(<MsgAnnouncer url="/api/dialogue" dialogue_id={6} pollInterval={2000} user_id={1}/>, document.getElementById('todo2'));
+// NOT SURE IF TURN IS property or state
+ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('todo2'));
 ReactDOM.render(gridInstance, document.getElementById('todo4'));

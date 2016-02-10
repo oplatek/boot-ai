@@ -1,5 +1,5 @@
-Journey from Human to Human to Human to System Dialogue - There and Back Again
-==============================================================================
+From Human-Human to Human-System Dialogue.
+==========================================
 
 A proof of concept for bootstrapping an end-to-end system with with annotated data throughout a pipeline of the system.
 Annotated are collected using crowdsourcing.
@@ -15,5 +15,5 @@ Todos & remarks
     - how to get immediate feedback
     - Select one from list http://stackoverflow.com/questions/27512180/reactjs-onclick-event-how-to-select-a-specific-button-from-a-list
 - Model - DB columns, different attention - I need to use columns
-    - negative examples - distribute to (no one selected actions - 0 probability, selected action receives probability of changing the "future" - computed after dialogue using another & reversed RNN choosing only from the selected actions
+    - negative examples - distribute to (no one selected actions - 0 probability, selected action receives probability of changing the "future" - computed after dialog using another & reversed RNN choosing only from the selected actions
 - login via https://github.com/gae-init/gae-init/blob/master/main/auth/auth.py

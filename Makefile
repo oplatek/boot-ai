@@ -1,15 +1,12 @@
 all: cp/bootai-static
 	@echo "Running all target"
 
-c-py:
-	python --version 2>&1 | grep 3.5 # heuristacally check python version
-
-env-bootai: c-py requirements.txt
+env-bootai: requirements.txt
 	virtualenv $@
 
-cp/install-requirements: c-py env-bootai requirements.txt
-	pip --version | grep 3   # heuristically check python versoin
-	pip install -r requirements.txt
+cp/install-requirements: env-bootai requirements.txt
+	env-bootai/bin/pip --version | grep 3   # heuristically check python versoin
+	env-bootai/bin/pip install -r requirements.txt
 	touch $@
 
 cp/bootai-static:
@@ -20,14 +17,15 @@ cp/bootai-static:
 	wget https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.js -O bootai/static/lib/browser.js
 	wget https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.28.2/react-bootstrap.js -O bootai/static/lib/react-bootstrap.js
 	wget https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.js -O bootai/static/lib/jquery.js
+	wget https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.js -O bootai/static/lib/socketio.js
 	@echo "Download NOT minimfied version of libraries!"
 	touch $@
 
-run-bootai:
-	python3 bootai/app.py
+run-bootai: cp/install-requirements
+	env-bootai/bin/python3 run_bootai.py
 
 open-bootai:
 	open http:127.0.0.1:5000
 
 
-.PHONY: run-bootai open-bootai c-py
+.PHONY: run-bootai open-bootai

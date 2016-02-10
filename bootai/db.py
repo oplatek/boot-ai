@@ -3,6 +3,30 @@
 import json
 from os.path import isdir
 import uuid
+import random
+import time
+from flask.ext.login import UserMixin
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
+class User(UserMixin):
+    def __init__(self, nick):
+        # Fixme implement proper authentication. See https://flask-login.readthedocs.org/en/latest/#how-it-works.
+        self.nick = nick
+        logger.warn('TODO implement authentication')
+        self.id = nick
+
+    @classmethod
+    def get(cls, nick):
+        logging.warn('TODO check that user can be created, return None if not valid')
+        return cls(nick)
+
+        
+
+
 
 
 class DialogDB(object):
@@ -20,7 +44,11 @@ class DialogDB(object):
         pass
 
     def assign_role_dialog(self):
-        pass
+        # FIXME group users together, find appropriate dialog and role
+        # role = random.choice(['assistant', 'user'])
+        role = 'assistant'
+        dialog_id = 'dialog-%s-%04d' % (time.strftime('%y%m%d-%H-%M-%S'), random.randint(0,9999))
+        return role, dialog_id
 
 
 class ComplexEncoder(json.JSONEncoder):

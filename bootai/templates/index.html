@@ -1,9 +1,7 @@
-<html>
-    <head>
-        <title>Group chat</title>
-    </head>
-    <body>
-        <h1>Group chat</h1>
-        Todo instructions. Try to <a href="{{ url_for('chat.login') }}">login</a>
-    </body>
-</html>
+{% set page_title = "Welcome! Instructions" %}
+
+{% extends "layout.html" %}
+
+{% block main %}
+  Todo instructions. Try to <a href="{{ url_for('chat.login') }}">login</a>.
+{% endblock %}

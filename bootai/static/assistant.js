@@ -183,7 +183,7 @@ const gridInstance = (
 
 
 
-ReactDOM.render(navbarInstance, document.getElementById('todo1'));
+ReactDOM.render(navbarInstance, document.getElementById('topbar'));
 // NOT SURE IF TURN IS property or state
-ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('todo2'));
+ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('messages'));
 ReactDOM.render(gridInstance, document.getElementById('todo4'));

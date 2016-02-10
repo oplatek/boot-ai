@@ -31,7 +31,7 @@ def dialog_request(dialog_id, user_id, turn_id):
     return response
 
 
-@api.route('//dialog/valid/<dialog_id>/user/<user_id>')
+@api.route('/dialog/valid/<dialog_id>/user/<user_id>')
 def dialog_valid_for_user(dialog_id, user_id):
     ok = True
     errors = 'MADE UP ERORRS'

@@ -1,11 +1,10 @@
-{% set page_title = "Login" %}
+{% set page_title = "Get new dialog" %}
 
 {% extends "layout.html" %}
 
 {% block main %}
   <form method="POST">
       {{ form.hidden_tag() }}
-      {{ form.name.label }}: {{ form.name() }} {% for error in form.name.errors %}{{ error }}{% endfor %}<br>
       {{ form.submit() }}
   </form>
 {% endblock %}

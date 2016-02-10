@@ -1,41 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title></title>
+{% set page_title = "Chat!" %}
 
-    <link rel="Shortcut Icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/x-icon">
+{% extends "layout.html" %}
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='lib/bootstrap.min.css') }}">
-    <link  rel="stylesheet" href="{{ url_for('static', filename='lib/bootstrap-theme.min.css') }}">
 
+    {% block css_style %}
     <link rel="stylesheet" href="{{ url_for('static', filename='action-selection.css') }}">
+    {% endblock %}
 
+    {% block js_top %}
     <script src="{{ url_for('static', filename='lib/react.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/react-dom.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/browser.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/react-bootstrap.js') }}"></script>
+    
+    <!-- See other libraries at the bottom and try to move even some from the above -->
+    {% endblock %}
+
+    {% block main %}
+      <!-- TODO not round corners of menu. See theme menu getbootrap there it is well rendered.
+      Menu is rendered in topbar div-->
+
+        <div id="todo4"></div>
+        <!-- use main tag instead -->
+        </div>
+
+    {% endblock %}
+
+  {% block footer %}
+    <div>
+      Dialogue id: <a href="{{ dialog_url }}"><span id="dialog_id"> {{ dialog_id }}</span></a>,
+      Role: <span id="role">{{ role }}</span>,
+      Author: <span id="author">{{author}}</span>
+    </div>
+  {% endblock %}
+
+  {% block js_btm %}
     <script src="{{ url_for('static', filename='lib/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/socketio.js') }}"></script>
+    <script type="text/babel" src="{{ url_for('static', filename='assistant.js') }}"></script>
+  {% endblock %}
 
-</head>
-<body role="document">
-  <!-- TODO not round corners of menu. See theme menu getbootrap there it is well rendered. -->
-  <div id="todo1"></div>
-  <noscript>
-    <a href="https://www.google.com/webhp?q=how%20to%20enable%20javascript">You have JavaScript disabled. Please, turn it on and return to start playing.</a>
-  </noscript>
-
-  <div className="container theme-showcase" role="main">
-    <div id="todo2"></div>
-    <div id="todo3"></div>
-    <div id="todo4"></div>
-  </div>
-  <script type="text/babel" src="{{ url_for('static', filename='assistant.js') }}"></script>
-  <div>
-    Dialogue id: <a href="{{ dialog_url }}"><span id="dialog_id"> {{ dialog_id }}</span></a>
-    Role: <span id="role">{{ role }}</span>
-    Nickname: <span id="author"> {{author}} </span>
-  </div>
 </body>
 </html>

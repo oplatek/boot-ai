@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}{{ page_title|default('BootAI') }}{% endblock %}</title>
+    <meta name="author" content="Ondrej Platek">
+    <!-- To ensure proper rendering and touch zooming, add the viewport meta tag to your <head>. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="Shortcut Icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/x-icon">
+
+    {% block css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='lib/bootstrap.min.css') }}">
+    <link  rel="stylesheet" href="{{ url_for('static', filename='lib/bootstrap-theme.min.css') }}">
+    {% endblock %}
+
+    {% block css_style %}
+    {% endblock %}
+
+    {% block js_top %}
+    {% endblock %}
+</head>
+<body style="padding-top: 20px; padding-bottom: 20px">
+    <!--[if lt IE 7]>
+        <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a>.</p>
+    <![endif]-->
+
+  <header>
+    <div id="topbar">
+    {% block topbar %}
+    {% endblock %}
+    </div>
+
+    <div id="messages">
+    <noscript>
+      <div class="alert alert-error">
+        You have JavaScript disabled. Please, <a href="https://www.google.com/webhp?q=how%20to%20enable%20javascript">turn it on and return to start playing</a>.
+      </div>
+  </noscript>
+    {% block flash_message %}
+        <div class="container-fluid">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+            <div class="container-fluid">
+                <div id='flash_message_container'>
+                    {% for category, msg in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            {{ msg }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% endwith %}
+        </div>
+    {% endblock %}
+    </div>
+  </header>
+
+  <main id="main" role="main">
+    {% block main %}
+    {% endblock %}
+  </main>
+
+  <footer>
+    {% block footer %}
+    {% endblock %}
+  </footer>
+
+    {% block js_btm %}
+    <!-- javascript which need not to be loaded before anything else-->
+    {% endblock %}
+
+</body>
+</html>

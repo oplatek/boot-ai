@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from bootai import create_app
+from bootai import create_app, socketio 
 import click
 import logging
 
@@ -14,7 +14,7 @@ import logging
 def main(log_level, debug, dialog_dir):
     app = create_app(debug, dialog_dir)
     logging.basicConfig(level=getattr(logging, log_level))
-    app.run()
+    socketio.run(app)
 
 
 

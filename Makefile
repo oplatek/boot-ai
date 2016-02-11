@@ -1,4 +1,4 @@
-all: cp/bootai-static
+all: cp/bootai-static cp/install-requirements
 	@echo "Running all target"
 
 env-bootai: requirements.txt

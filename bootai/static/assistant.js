@@ -15,6 +15,9 @@ var Grid = ReactBootstrap.Grid;
 var Row = ReactBootstrap.Row;
 var Col = ReactBootstrap.Col;
 
+var socket;
+var db;
+
 // TODO load the data
 var history = [
     {id:0, value: "Good morning. How may I help you?", reason: false, author: "id-you"},
@@ -31,6 +34,22 @@ var actions = [ {id:1, value: "Give me a bit more time...", selected: false, aut
     {id:4, value: "Great! I love sweets!", selected: false, author: "crowd-1"}
     ];
 
+
+$(document).ready(function(){
+    socket = io.connect('http://' + document.domain + ':' + location.port + '/chat');
+    db = {"FIXME": "FIXME"};
+    // $.ajax({
+    //   url: '/api/dialog/db/dstc2',
+    //   dataType: 'json',
+    //   cache: true,
+    //   success: function(db_received) {
+    //     db = db_received;
+    //   },
+    //   error: function(xhr, status, err) {
+    //     console.error(status, err.toString());
+    //   }
+    // });
+});
 
 
 const navbarInstance = (
@@ -60,37 +79,41 @@ var MsgAnnouncer = React.createClass({
     return {correct: 0, created: 0, errors: 0, msgs:[]};
     // return {correct: 35, created: 20, errors: 10, msgs: [{style: "success", id: "1", text: "Great! You and two other people agreed to choose action 3."}]};
   },
-  loadStatsFromServer: function() {
-    $.ajax({
-      url: this.props.url  + '/messages/dialog/' + this.props.dialog_id + '/user/' + this.props.user_id + '/turn/' + this.props.turn,
-      dataType: 'json',
-      cache: false,
-      success: function(stats) {
-        this.setState({correct: stats["correct"]});
-        this.setState({created: stats["created"]});
-        this.setState({errors: stats["errors"]});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
-  },
-  loadMsgsFromServer: function() {
-    $.ajax({
-      url: this.props.url + '?' +  'dialog_id=' + this.props.dialog_id + '&' + 'msgs=yes' + '&' + 'user_id=' + this.props.user_id,
-      dataType: 'json',
-      cache: false,
-      success: function(messages) {
-        this.setState({msgs: messages});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
-  },
+
+  // replace with socketio
+  // loadStatsFromServer: function() {
+  //   $.ajax({
+  //     url: this.props.url  + '/api/stats/dialog/' + this.props.dialog_id + '/user/' + this.props.user_id + '/turn/' + this.props.turn,
+  //     dataType: 'json',
+  //     cache: false,
+  //     success: function(stats) {
+  //       this.setState({correct: stats["correct"]});
+  //       this.setState({created: stats["created"]});
+  //       this.setState({errors: stats["errors"]});
+  //     }.bind(this),
+  //     error: function(xhr, status, err) {
+  //       console.error(this.props.url, status, err.toString());
+  //     }.bind(this)
+  //   });
+  // },
+  // loadMsgsFromServer: function() {
+  //   $.ajax({
+  //     url: this.props.url  + '/api/messages/dialog/' + this.props.dialog_id + '/user/' + this.props.user_id + '/turn/' + this.props.turn,
+  //     dataType: 'json',
+  //     cache: false,
+  //     success: function(messages) {
+  //       this.setState({msgs: messages});
+  //     }.bind(this),
+  //     error: function(xhr, status, err) {
+  //       console.error(this.props.url, status, err.toString());
+  //     }.bind(this)
+  //   });
+  // },
+
   componentDidMount: function() {
-    this.loadMsgsFromServer();
-    setInterval(this.loadMsgsFromServer, this.props.pollInterval);
+    // FIXME callbacks from parent
+    // this.loadMsgsFromServer();
+    // setInterval(this.loadMsgsFromServer, this.props.pollInterval);
   },
   render:function() {
     var msgAlerts = this.state.msgs.map(function(m) {
@@ -108,6 +131,57 @@ var MsgAnnouncer = React.createClass({
       </div>
     );
   },
+});
+
+
+var ActionSelect = React.createClass({
+  getInitialState() {
+    // FIXME db is loaded with AJAX as top level variable
+    return {messages:[], history: {}, actions: {}};
+  },
+  componentDidMount() { 
+    socket.on('messages', this._messagesReceive);
+    socket.on('history', this._historyReceive);
+    socket.on('actions', this._actionsRecieve);
+    socket.on('new_actions', this._new_actionsRecieve);
+    socket.on('timeout_select', this._timeout_select);
+    socket.on('timeout_turn', this._timeout_turn);
+  },
+
+  _messagesReceive(msgs) {
+    console.log('receive msg', msgs);
+    // TODO
+  },
+
+  _historyReceive(msgs) {
+    console.log('receive history', msgs);
+    // TODO
+  },
+
+  _actionsReceive(msgs) {
+    console.log('receive actions', msgs);
+    // TODO
+  },
+
+  _new_actionsReceive(msgs) {
+    console.log('receive actions', msgs);
+    // TODO
+  },
+
+  _timeout_select(msgs) {
+    console.log('timeout select');
+  },
+
+  _timeout_turn(msgs) {
+    console.log('timeout turn');
+  },
+
+  render() {
+    if(this.props.role == "assistant") {
+    } else {
+    }
+  },
+    
 });
 
 
@@ -187,3 +261,4 @@ ReactDOM.render(navbarInstance, document.getElementById('topbar'));
 // NOT SURE IF TURN IS property or state
 ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('messages'));
 ReactDOM.render(gridInstance, document.getElementById('todo4'));
+ReactDOM.render(<ActionSelect dialog_id="TODO id" nick="TODO nick" role="TODO role"/>, document.getElementById('main'));

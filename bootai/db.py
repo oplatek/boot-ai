@@ -26,7 +26,17 @@ class User(UserMixin):
 
         
 
+def record_action_selection(dialog_id, role, msg):
+    assert 'turn' in msg and 'text' in msg, msg
+    print('TODO parse and store msg')
+    print('todo setup timeouts for live session e.g. from config')
+    timeout_selec, timeout_turn = True, True
+    user_messages = [{"style": "info", "text": 'Turn finished, wait for reply'}]
+    return timeout_select, timeout_turn, user_messages 
 
+
+def action_most_voted(dialog_id, role, turn):
+    return 'Faked action'
 
 
 class DialogDB(object):

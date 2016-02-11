@@ -1,5 +1,6 @@
 // TODO create components which can dynamically display the json data.
 
+
 var Nav = ReactBootstrap.Nav;
 var NavItem = ReactBootstrap.NavItem;
 var Navbar = ReactBootstrap.Navbar;
@@ -33,23 +34,6 @@ var actions = [ {id:1, value: "Give me a bit more time...", selected: false, aut
     {id:3, value: "I found many options would you like to hear few examples?", selected: false, author: "crowd-1"},
     {id:4, value: "Great! I love sweets!", selected: false, author: "crowd-1"}
     ];
-
-
-$(document).ready(function(){
-    socket = io.connect('http://' + document.domain + ':' + location.port + '/chat');
-    db = {"FIXME": "FIXME"};
-    // $.ajax({
-    //   url: '/api/dialog/db/dstc2',
-    //   dataType: 'json',
-    //   cache: true,
-    //   success: function(db_received) {
-    //     db = db_received;
-    //   },
-    //   error: function(xhr, status, err) {
-    //     console.error(status, err.toString());
-    //   }
-    // });
-});
 
 
 const navbarInstance = (
@@ -133,6 +117,85 @@ var MsgAnnouncer = React.createClass({
   },
 });
 
+var HistoryView = React.createClass({
+  render() {
+      return (
+        <div class="actionselectionview">
+          <div className="column-header">
+            <h3>Select Reasons</h3>
+          </div>
+          <ListGroup>
+            <ListGroupItem href="#" header="Assistant" text="" active>
+              Todo generate dynamicly from the json
+            </ListGroupItem>
+            <ListGroupItem href="#" header="You">todo 2</ListGroupItem>
+            <ListGroupItem header="Assistant" disabled active>Select new action from the options and mark at least one from the actions above as reasons why you have chosen that action  3</ListGroupItem>
+          </ListGroup>
+        </div>);
+  },
+});
+
+
+var ActionSelectView = React.createClass({
+  render() {
+    return (
+      <div clas="historyview">
+        <div className="column-header">
+          <h3>Select the Best Action</h3>
+        </div>
+        <ListGroup>
+          <ListGroupItem href="#" active>Todo generate dynamicly from the json</ListGroupItem>
+          <ListGroupItem href="#">todo 2</ListGroupItem>
+          <ListGroupItem href="#" disabled>todo - others disabled  3</ListGroupItem>
+        </ListGroup>
+        <div className="form-group">
+            <label for="new_action">Your proposal if above actions are not applicable:</label>
+              <textarea className="form-control" rows="5" id="new_action">You can use # for database entities and e.g. @user1 for selecting reasons"</textarea>
+        </div>
+      </div>);
+  },
+});
+
+var DbView = React.createClass({
+  render() {
+    return (
+      <div class="dbview">
+        <div className="column-header">
+          <h3>Find and Mark Info</h3>
+        </div>
+        <Table hover>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Restaurant</th>
+                <th>Price Range</th>
+                <th>Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Ask</td>
+                <td>Medium</td>
+                <td>12 Bridge St, Cambridge</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Pizza place</td>
+                <td>Cheap</td>
+                <td>3 Churchill St, Cambridge</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Kebab place</td>
+                <td>Cheap</td>
+                <td>Queen Mary Sq, Cambridge</td>
+              </tr>
+            </tbody>
+          </Table>
+        </div>);
+  },
+});
 
 var ActionSelect = React.createClass({
   getInitialState() {
@@ -140,6 +203,22 @@ var ActionSelect = React.createClass({
     return {messages:[], history: {}, actions: {}};
   },
   componentDidMount() { 
+
+    db = {"FIXME": "FIXME"};
+    // $.ajax({
+    //   url: '/api/dialog/db/dstc2',
+    //   dataType: 'json',
+    //   cache: true,
+    //   success: function(db_received) {
+    //     db = db_received;
+    //   },
+    //   error: function(xhr, status, err) {
+    //     console.error(status, err.toString());
+    //   }
+    // });
+
+    socket = io.connect('http://' + document.domain + ':' + location.port + '/chat');
+    socket.on('connect', function() { socket.emit('joined_dialog', {}); });
     socket.on('messages', this._messagesReceive);
     socket.on('history', this._historyReceive);
     socket.on('actions', this._actionsRecieve);
@@ -177,88 +256,38 @@ var ActionSelect = React.createClass({
   },
 
   render() {
-    if(this.props.role == "assistant") {
-    } else {
-    }
+    return (
+      <Grid>
+        <Row className="show-grid">
+          <Col xs={4} md={4}>
+            <HistoryView/>
+          </Col>
+          <Col xs={4} md={4}>
+            <ActionSelectView/>
+          </Col>
+          <Col xs={4} md={4}>
+            <DbView/>
+          </Col>
+        </Row>
+      </Grid>);
+
   },
     
 });
 
 
-const gridInstance = (
-  <Grid>
 
-    <Row className="show-grid">
-      <Col xs={4} md={4}>
-        <div className="column-header">
-          <h3>Select Reasons</h3>
-        </div>
-        <ListGroup>
-          <ListGroupItem href="#" header="Assistant" text="" active>
-            Todo generate dynamicly from the json
-          </ListGroupItem>
-          <ListGroupItem href="#" header="You">todo 2</ListGroupItem>
-          <ListGroupItem header="Assistant" disabled active>Select new action from the options and mark at least one from the actions above as reasons why you have chosen that action  3</ListGroupItem>
-        </ListGroup>
-      </Col>
-      <Col xs={4} md={4}>
-        <div className="column-header">
-          <h3>Select the Best Action</h3>
-        </div>
-        <ListGroup>
-          <ListGroupItem href="#" active>Todo generate dynamicly from the json</ListGroupItem>
-          <ListGroupItem href="#">todo 2</ListGroupItem>
-          <ListGroupItem href="#" disabled>todo - others disabled  3</ListGroupItem>
-        </ListGroup>
-        <div className="form-group">
-            <label for="new_action">Your proposal if above actions are not applicable:</label>
-              <textarea className="form-control" rows="5" id="new_action">You can use # for database entities and e.g. @user1 for selecting reasons"</textarea>
-        </div>
-      </Col>
-      <Col xs={4} md={4}>
-        <div className="column-header">
-          <h3>Find and Mark Info</h3>
-        </div>
-        <Table hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Restaurant</th>
-                <th>Price Range</th>
-                <th>Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>Ask</td>
-                <td>Medium</td>
-                <td>12 Bridge St, Cambridge</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Pizza place</td>
-                <td>Cheap</td>
-                <td>3 Churchill St, Cambridge</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>Kebab place</td>
-                <td>Cheap</td>
-                <td>Queen Mary Sq, Cambridge</td>
-              </tr>
-            </tbody>
-          </Table>
-      </Col>
-    </Row>
+$(document).ready(function(){
+  ReactDOM.render(navbarInstance, document.getElementById('topbar'));
+  // NOT SURE IF TURN IS property or state
+  ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('messages'));
 
-  </Grid>
-);
-
-
-
-ReactDOM.render(navbarInstance, document.getElementById('topbar'));
-// NOT SURE IF TURN IS property or state
-ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('messages'));
-ReactDOM.render(gridInstance, document.getElementById('todo4'));
-ReactDOM.render(<ActionSelect dialog_id="TODO id" nick="TODO nick" role="TODO role"/>, document.getElementById('main'));
+  var dialog_id = document.getElementById('dialog_id').textContent;
+  console.log(dialog_id);
+  var nick = document.getElementById('author').textContent;
+  console.log(nick);
+  var role = document.getElementById('role').textContent;
+  console.log(role);
+  var main = document.getElementById('main');
+  ReactDOM.render(<ActionSelect dialog_id={dialog_id} nick={nick} role={role}/>, main);
+});

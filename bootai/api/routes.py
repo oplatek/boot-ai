@@ -56,8 +56,8 @@ def proposed_action(msg):
         emit('timeout_turn', '', room=get_roledialog_key())
 
 
-@socketio.on('join-dialogue', namespace='/api')
-def join(msg):
+@socketio.on('join_dialog', namespace='/api')
+def join_dialog(msg):
     join_room(get_dialog_key())
     join_room(get_roledialog_key())
     join_room(get_userdialog_key())
@@ -103,13 +103,6 @@ def send_user_stats():
     user_room = get_userdialog_key()
     emit('stats', {'correct': 1, 'created': 2, 'errors': 3}, room=user_room)
 
-
-
-@socketio.on('get', namespace='/api/dialogue/stats')
-def joined(msg):
-    room = session.get('room')
-    join_room(room)
-    emit('status', {'msg': session.get('name') + ' has entered the room.'}, room=room)
 
 @api.route('/messages/dialog/<dialog_id>/user/<user_id>/turn/<int:turn_id>', methods=['GET'])
 def user_message(dialog_id, user_id, turn_id):

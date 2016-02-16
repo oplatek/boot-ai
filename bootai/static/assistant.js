@@ -118,6 +118,9 @@ var MsgAnnouncer = React.createClass({
 });
 
 var HistoryView = React.createClass({
+  getInitialState() {
+    return {selected: null};
+  },
   render() {
       return (
         <div class="actionselectionview">
@@ -157,6 +160,31 @@ var ActionSelectView = React.createClass({
 });
 
 var DbView = React.createClass({
+  getInitialState() {
+    return {db_filtered: _get_default_db()};
+  },
+  _get_default_db() {
+    return [
+      {
+          "phone": "01223 461661",
+          "pricerange": "expensive",
+          "addr": "31 newnham road newnham",
+          "area": "west",
+          "food": "indian",
+          "postcode": "not available",
+          "name": "india house"
+      },
+      {
+          "addr": "cambridge retail park newmarket road fen ditton",
+          "area": "east",
+          "food": "italian",
+          "phone": "01223 323737",
+          "pricerange": "moderate",
+          "postcode": "c b 5 8 w r",
+          "name": "pizza hut fen ditton"
+      }
+    ];
+  },
   render() {
     return (
       <div class="dbview">
@@ -199,8 +227,7 @@ var DbView = React.createClass({
 
 var ActionSelect = React.createClass({
   getInitialState() {
-    // FIXME db is loaded with AJAX as top level variable
-    return {messages:[], history: {}, actions: {}};
+    return {selected: null};
   },
   componentDidMount() { 
 

@@ -2,22 +2,27 @@
 from flask import Flask
 from flask.ext.socketio import SocketIO
 from flask.ext.login import LoginManager
-from .db import DialogDB, User
+from .db import DialogDB, User, PriorityQueue
+import eventlet
+eventlet.monkey_patch()
 
 
-socketio = SocketIO()
-db = None
+pq = PriorityQueue()
+ddb = None
+socketio = None
+app = None
 login_manager = LoginManager()
 login_manager.login_view = "chat.login"
 
 
-def create_app(debug, dialog_dir):
-    global db
+def setup_app(debug, dialog_dir):
+    global ddb, app, socketio
     app = Flask(__name__)
     app.debug = debug
-    app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'
+    app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'  # FIXME laod from env via click
+    socketio = SocketIO(app, async_mode=eventlet.__name__)
 
-    db = DialogDB(dialog_dir)
+    ddb = DialogDB(dialog_dir)
 
     from .chat.routes import chat as chat_blueprint
     app.register_blueprint(chat_blueprint)
@@ -33,6 +38,7 @@ def create_app(debug, dialog_dir):
     login_manager.init_app(app)
     configure_logging(app)
 
+    pq.run_async()  # FIXME Put into App class and run it as app.run()
     return app
 
 

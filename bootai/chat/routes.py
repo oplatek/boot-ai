@@ -1,7 +1,7 @@
 from flask import render_template, current_app, session, redirect, url_for, Blueprint, request, flash, abort
 from .forms import LoginForm, AssignForm
 from bootai import db, login_manager
-from ..db import User
+from ..db import User, Role
 from flask.ext.login import login_required, login_user, current_user, logout_user, confirm_login, login_fresh
 
 
@@ -20,10 +20,10 @@ def assistant():
     dialog_id = session.get('dialog', None)
     role_id = session.get('role', None)
     if dialog_id and role_id:
-        assert role_id in ['assistant', 'user']
-        if  role_id == 'user':
+        if  role_id == Role.user:
             return _redirect_to_role(role_id)
-        return render_template('action-selection.html', dialog_id=dialog_id, role=role_id, author=current_user.nick)
+        else:
+            return render_template('action-selection.html', dialog_id=dialog_id, role=role_id, author=current_user.nick)
     else:
         return redirect(url_for('chat.assign'))
 
@@ -36,10 +36,10 @@ def user():
     dialog_id = session.get('dialog', None)
     role_id = session.get('role', None)
     if dialog_id and role_id:
-        assert role_id in ['assistant', 'user']
-        if  role_id == 'assistant':
+        if  role_id == Role.assistant:
             return _redirect_to_role(role_id)
-        return render_template('action-selection.html', dialog_id=dialog_id, role=role_id, author=current_user.nick)
+        else:
+            return render_template('action-selection.html', dialog_id=dialog_id, role=role_id, author=current_user.nick)
     else:
         return redirect(url_for('chat.assign'))
 
@@ -71,10 +71,7 @@ def assign():
         role, session['dialog'] = db.assign_role_dialog()
         session['role'] = role
         flash(('You have been assigned role %s' % role, 'warning'))
-        if role == 'user' or role =='assistant':
-            return redirect(url_for('chat.%s' % role))
-        else:
-            raise RuntimeError('Unknow role: %s' % role)
+        return redirect(url_for('chat.%s' % role))
     else:
        return render_template('assign.html', form=form)
     # TODO ensure that assign can be POSTed from AssignForm on this page

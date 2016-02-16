@@ -19,3 +19,5 @@ Todos & remarks
 - if support for proper authentication wanted look at fbone or at https://github.com/gae-init/gae-init/blob/master/main/auth/auth.py
 - mail smtp error handler. setup email bootai-admin@gmail.com and use this tutorial http://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xi-email-support
 - TODO manage session via decorators and invalidate sessions if role and dialogue is not valid anymore and make it expire quite soon e.g. after few hours http://stackoverflow.com/questions/11783025/is-there-an-easy-way-to-make-sessions-timeout-in-flask
+- implement CountDown and TIMEOUTS for waiting on other side action-selection using https://github.com/shanealynn/async_flask/blob/master/application.py
+- Example app with eventlet side pushing of notification https://github.com/miguelgrinberg/Flask-SocketIO/blob/master/example/app.py

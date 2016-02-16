@@ -2,8 +2,8 @@ import json
 from os import path
 from flask import request, Response, current_app, Blueprint, session
 from flask.ext.socketio import emit, join_room, leave_room
-from .. import socketio
-from ..db import record_action_selection
+from .. import socketio 
+model as mdl
 
 
 api = Blueprint('api', __name__, url_prefix='/api')
@@ -47,7 +47,7 @@ def new_action(msg):
 
 @socketio.on('proposed_action', namespace='/api')
 def proposed_action(msg):
-    timeout_select, timeout_turn, user_messages = record_action_selection(msg)
+    timeout_select, timeout_turn, user_messages = db.record_action_selection(msg)
     for msg in messages:
         emit('messages', msg, room=get_userdialog_key())
     if timeout_select:
@@ -68,6 +68,9 @@ def join_dialog(msg):
     emit('messages', 
             {'sytle':'info', 'text': 'Your, role is %s' % session['role']}, 
             room=get_userdialog_key()) 
+    dialog_id, role = session['dialog_id'], session['role']
+    send_history(db.history(dialog_id))
+    send_actions(dialog_id, role)
 
 
 @socketio.on('leave', namespace='/api')
@@ -78,12 +81,11 @@ def leave(msg):
     emit('messages', {'msg': session.get('name') + ' has left the room.'}, room=get_dialog_key())
 
 
-def notify_role(dialog_id, role, msg, **kwargs):
-    assert role in ['assistant', 'role']
-    emit('messages', msg, room=get_roledialog_key(**kwargs))
+def notify_role(role: Role, msg: string, **kwargs) -> None:
+    emit('messages', msg, room=get_roledialog_key(role=role, **kwargs))
 
 
-def notifly_user(dialog_id, user, msg, **kwargs):
+def notify_user(msg, **kwargs):
     emit('messages', msg, room=get_userdialog_key(**kwargs))
 
 
@@ -91,12 +93,40 @@ def send_history(history, **kwargs):
     emit('history', history, room=get_dialog_key(**kwargs))
 
 
-def send_user_actions(actions, **kwargs):
-    emit('actions', actions, room=get_dialog_key(role='user', **kwargs))
+def send_actions(role, dialog_id, **kwargs):
 
+    class Callback(object):
+        def __init__(self, dialog_id, role):
+            self.dialog = DialogDB.get_dialog(dialo_id)
+            self.role = role
+            self.proposed_actions = mdl.predict_actions(dialog_id, role)
 
-def send_assistant_actions(actions, **kwargs):
-    emit('actions', actions, room=get_dialog_key(role='user', **kwargs))
+        def __call__(self, selected:Utterance)->None:
+            if self.proposed_actions:
+                self.dialog.turn_alternatives.append(self.proposed_actions)  # FIXME not api
+                self.dialog.selecte_utts.append(selected)
+                self.dialog.save() 
+                logger.info('Callback was called with selected action %s', selected)
+                notify_role(self.role, 'Turn finished', dialog_id=self.dialog.dialo_id)
+                send_history(json.dumps(self.dialog.selected_history, cls=ComplexEncodera))
+
+                next_role = role.next()
+                send_actions(next_role, dialog_id)
+            else:
+                logger.warn("Model for role %s in dialog %s generated no proposed actions", self.role, self.dialog.dialog_id)
+
+        def register_response(self):
+            # TODO we suppose that proposed_action[0] is the best
+            r = Response(self.dialog.dialog_id, 
+                    self.dialog.last_turn_finished + 1, self.role, 
+                    self, 
+                    self.proposed_actions[0])
+            pq.register(r)
+
+    cb = Callback(dialog_id, role)
+    cb.register_response()
+
+    emit('actions', cb.proposed_actions, room=get_dialog_key(role=role, **kwargs))
 
 
 def send_user_stats():

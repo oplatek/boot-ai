@@ -3,6 +3,9 @@
 {% extends "layout.html" %}
 
 {% block main %}
+  {% if role %}
+  Load the <a href="/{{ role }}">dialog {{ dialog_id }} for your {{ role }} role</a>!
+  {% endif %}
   <form method="POST">
       {{ form.hidden_tag() }}
       {{ form.submit() }}

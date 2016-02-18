@@ -1,26 +1,30 @@
 # import click
+import eventlet
+eventlet.monkey_patch()
+import logging
+import os
 from flask import Flask
 from flask.ext.socketio import SocketIO
 from flask.ext.login import LoginManager
-from .db import DialogDB, User, PriorityQueue
-import eventlet
-eventlet.monkey_patch()
+from .db import DialogDB, User, PriorityQueue, ComplexEncoder
 
 
 pq = PriorityQueue()
 ddb = None
-socketio = None
-app = None
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'  # FIXME laod from env via click
+socketio = SocketIO(app, async_mode=eventlet.__name__)
+logger = logging.getLogger(__name__)
+
 login_manager = LoginManager()
 login_manager.login_view = "chat.login"
 
 
-def setup_app(debug, dialog_dir):
+
+def setup_app(debug, dialog_dir, config=None):
     global ddb, app, socketio
-    app = Flask(__name__)
     app.debug = debug
-    app.config['SECRET_KEY'] = 'gjr39dkjn344_!67#'  # FIXME laod from env via click
-    socketio = SocketIO(app, async_mode=eventlet.__name__)
+    app.json_encoder = ComplexEncoder
 
     ddb = DialogDB(dialog_dir)
 
@@ -29,8 +33,7 @@ def setup_app(debug, dialog_dir):
     from .api.routes import api as api_blueprint
     app.register_blueprint(api_blueprint)
 
-    socketio.init_app(app)
-    configure_app(app)
+    configure_app(app, config)
 
     @login_manager.user_loader
     def load_user(id):
@@ -40,7 +43,6 @@ def setup_app(debug, dialog_dir):
 
     pq.run_async()  # FIXME Put into App class and run it as app.run()
     return app
-
 
 
 def configure_app(app, config=None):
@@ -57,6 +59,7 @@ def configure_app(app, config=None):
 
     # Use instance folder instead of env variables to make deployment easier.
     app.config.from_envvar('MAIL_PASSWORD', silent=(app.debug or app.testing))
+
 
 def configure_logging(app):
     """Configure file(info) and email(error) logging."""
@@ -82,9 +85,9 @@ def configure_logging(app):
     app.logger.addHandler(info_file_handler)
 
     # Testing
-    #app.logger.info("testing info.")
-    #app.logger.warn("testing warn.")
-    #app.logger.error("testing error.")
+    # app.logger.info("testing info.")
+    # app.logger.warn("testing warn.")
+    # app.logger.error("testing error.")
 
     mail_handler = SMTPHandler(app.config['MAIL_SERVER'],
                                app.config['MAIL_USERNAME'],

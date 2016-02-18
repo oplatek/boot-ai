@@ -59,82 +59,40 @@ const navbarInstance = (
 
 
 var MsgAnnouncer = React.createClass({
-  getInitialState: function() {
-    return {correct: 0, created: 0, errors: 0, msgs:[]};
-    // return {correct: 35, created: 20, errors: 10, msgs: [{style: "success", id: "1", text: "Great! You and two other people agreed to choose action 3."}]};
-  },
-
-  // replace with socketio
-  // loadStatsFromServer: function() {
-  //   $.ajax({
-  //     url: this.props.url  + '/api/stats/dialog/' + this.props.dialog_id + '/user/' + this.props.user_id + '/turn/' + this.props.turn,
-  //     dataType: 'json',
-  //     cache: false,
-  //     success: function(stats) {
-  //       this.setState({correct: stats["correct"]});
-  //       this.setState({created: stats["created"]});
-  //       this.setState({errors: stats["errors"]});
-  //     }.bind(this),
-  //     error: function(xhr, status, err) {
-  //       console.error(this.props.url, status, err.toString());
-  //     }.bind(this)
-  //   });
-  // },
-  // loadMsgsFromServer: function() {
-  //   $.ajax({
-  //     url: this.props.url  + '/api/messages/dialog/' + this.props.dialog_id + '/user/' + this.props.user_id + '/turn/' + this.props.turn,
-  //     dataType: 'json',
-  //     cache: false,
-  //     success: function(messages) {
-  //       this.setState({msgs: messages});
-  //     }.bind(this),
-  //     error: function(xhr, status, err) {
-  //       console.error(this.props.url, status, err.toString());
-  //     }.bind(this)
-  //   });
-  // },
-
-  componentDidMount: function() {
-    // FIXME callbacks from parent
-    // this.loadMsgsFromServer();
-    // setInterval(this.loadMsgsFromServer, this.props.pollInterval);
-  },
+  // TODO hide messages http://stackoverflow.com/questions/24171226/react-js-removing-element-from-dom-after-set-amount-of-time
   render:function() {
-    var msgAlerts = this.state.msgs.map(function(m) {
+    var msgAlerts = this.props.msgs.map(function(m) {
       return ( <Alert bsStyle={m.style} key={m.id}>{m.text}</Alert>);
     });
-
     return (
-      <div>
-        <ProgressBar>
-          <ProgressBar striped bsStyle="success" now={this.state.correct} key={1} />
-          <ProgressBar bsStyle="info" now={this.state.created} key={2} />
-          <ProgressBar active bsStyle="danger" now={this.state.errors} key={3} />
-        </ProgressBar>
+      <div class="container">
         {msgAlerts}
+        <ProgressBar>
+          <ProgressBar striped bsStyle="success" now={this.props.stats.correct} key={1} />
+          <ProgressBar bsStyle="info" now={this.props.stats.created} key={2} />
+          <ProgressBar active bsStyle="danger" now={this.props.stats.errors} key={3} />
+        </ProgressBar>
       </div>
-    );
+      );
   },
 });
 
 var HistoryView = React.createClass({
-  getInitialState() {
-    return {selected: null};
-  },
   render() {
-      return (
+    var msgHistories = this.props.msgs.map(function(m) {
+      // FIXME key and how to select multiple options
+      return (<ListGroupItem href="#?TODO" header={m.author}>{m.text}</ListGroupItem>);
+    });
+    return (
         <div class="actionselectionview">
           <div className="column-header">
             <h3>Select Reasons</h3>
           </div>
           <ListGroup>
-            <ListGroupItem href="#" header="Assistant" text="" active>
-              Todo generate dynamicly from the json
-            </ListGroupItem>
-            <ListGroupItem href="#" header="You">todo 2</ListGroupItem>
-            <ListGroupItem header="Assistant" disabled active>Select new action from the options and mark at least one from the actions above as reasons why you have chosen that action  3</ListGroupItem>
+          {msgHistories}
           </ListGroup>
-        </div>);
+        </div>
+        );
   },
 });
 
@@ -161,7 +119,7 @@ var ActionSelectView = React.createClass({
 
 var DbView = React.createClass({
   getInitialState() {
-    return {db_filtered: _get_default_db()};
+    return {db_filtered: this._get_default_db()};
   },
   _get_default_db() {
     return [
@@ -227,9 +185,18 @@ var DbView = React.createClass({
 
 var ActionSelect = React.createClass({
   getInitialState() {
-    return {selected: null};
+    return {
+      stats: {correct: 0, created: 0, errors: 0}, 
+      msgs:[],
+      actions_proposed: [],
+      action_selected: [],
+      history: [],
+    };
+
+      // add actions_valid: []
   },
   componentDidMount() { 
+    console.log('ActionSelect mounted');
 
     db = {"FIXME": "FIXME"};
     // $.ajax({
@@ -243,9 +210,13 @@ var ActionSelect = React.createClass({
     //     console.error(status, err.toString());
     //   }
     // });
+    var namespace = '/api';
 
-    socket = io.connect('http://' + document.domain + ':' + location.port + '/chat');
-    socket.on('connect', function() { socket.emit('joined_dialog', {}); });
+    socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+    socket.on('connect', function() { 
+      socket.emit('join_dialog', {}); 
+      console.log('socketio.emit: join_dialog');
+    });
     socket.on('messages', this._messagesReceive);
     socket.on('history', this._historyReceive);
     socket.on('actions', this._actionsRecieve);
@@ -254,14 +225,26 @@ var ActionSelect = React.createClass({
     socket.on('timeout_turn', this._timeout_turn);
   },
 
-  _messagesReceive(msgs) {
-    console.log('receive msg', msgs);
-    // TODO
+  _messagesReceive(new_msgs) {
+    var {msgs} = this.state;
+    msgs.push(new_msgs);
+    if (msgs.length > 3) {
+      msgs.shift()
+    };
+    this.setState({msgs});
+    console.log('Updated msgs:', msgs, 'after new_msgs added', new_msgs);
   },
 
-  _historyReceive(msgs) {
-    console.log('receive history', msgs);
-    // TODO
+  _historyReceive(new_history) {
+    console.log(history, new_history);
+    var {history} = this.state;
+    history = new_history;
+    this.setState({history});
+    if (history.length > 0) {
+      console.log('New history received .. last msg', history[history.length-1]);
+    } else {
+      console.log('Empty history', new_history);
+    }
   },
 
   _actionsReceive(msgs) {
@@ -284,19 +267,26 @@ var ActionSelect = React.createClass({
 
   render() {
     return (
-      <Grid>
-        <Row className="show-grid">
-          <Col xs={4} md={4}>
-            <HistoryView/>
-          </Col>
-          <Col xs={4} md={4}>
-            <ActionSelectView/>
-          </Col>
-          <Col xs={4} md={4}>
-            <DbView/>
-          </Col>
-        </Row>
-      </Grid>);
+      <div>
+        <div>
+          <MsgAnnouncer msgs={this.state.msgs} stats={this.state.stats} />
+        </div>
+        <Grid>
+          <Row className="show-grid">
+            <Col xs={4} md={4}>
+              <HistoryView msgs={this.state.history} />
+            </Col>
+            <Col xs={4} md={4}>
+              <ActionSelectView/>
+            </Col>
+            <Col xs={4} md={4}>
+              <DbView/>
+            </Col>
+          </Row>
+        </Grid>
+      </div>
+      );
+
 
   },
     
@@ -306,8 +296,6 @@ var ActionSelect = React.createClass({
 
 $(document).ready(function(){
   ReactDOM.render(navbarInstance, document.getElementById('topbar'));
-  // NOT SURE IF TURN IS property or state
-  ReactDOM.render(<MsgAnnouncer url="/api/dialog" dialog_id={6} pollInterval={2000} user_id={1} turn={8}/>, document.getElementById('messages'));
 
   var dialog_id = document.getElementById('dialog_id').textContent;
   console.log(dialog_id);

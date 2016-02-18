@@ -1,16 +1,16 @@
 from flask import render_template, current_app, session, redirect, url_for, Blueprint, request, flash, abort
 from .forms import LoginForm, AssignForm
-from bootai import db, login_manager
 from ..db import User, Role
-from flask.ext.login import login_required, login_user, current_user, logout_user, confirm_login, login_fresh
+from .. import ddb
+from flask.ext.login import login_required, login_user, current_user, logout_user
 
 
 chat = Blueprint('chat', __name__)
 
 
-def _redirect_to_role(role_id):
-    flash('You are logged as %s. You cannot change roles' % role_id, 'error')
-    return redirect(url_for('chat.%s' % role_id))
+def _redirect_to_role(role):
+    flash('You are logged as %s. You cannot change roles' % role, 'error')
+    return redirect(url_for('chat.%s' % role))
 
 
 @chat.route('/assistant')
@@ -18,12 +18,12 @@ def _redirect_to_role(role_id):
 def assistant():
     current_app.logger.info("Rendering assistant view")
     dialog_id = session.get('dialog', None)
-    role_id = session.get('role', None)
-    if dialog_id and role_id:
-        if  role_id == Role.user:
-            return _redirect_to_role(role_id)
+    role = session.get('role', None)
+    if dialog_id and role:
+        if role == Role.user:
+            return _redirect_to_role(role)
         else:
-            return render_template('action-selection.html', dialog_id=dialog_id, role=role_id, author=current_user.nick)
+            return render_template('action-selection.html', dialog_id=dialog_id, role=role, author=current_user.nick)
     else:
         return redirect(url_for('chat.assign'))
 
@@ -34,19 +34,20 @@ def user():
     # FIXME change it for user, too similar to assistant
     current_app.logger.info("Rendering user view")
     dialog_id = session.get('dialog', None)
-    role_id = session.get('role', None)
-    if dialog_id and role_id:
-        if  role_id == Role.assistant:
-            return _redirect_to_role(role_id)
+    role = session.get('role', None)
+    if dialog_id and role:
+        if role == Role.assistant:
+            return _redirect_to_role(role)
         else:
-            return render_template('action-selection.html', dialog_id=dialog_id, role=role_id, author=current_user.nick)
+            return render_template('action-selection.html', dialog_id=dialog_id, role=role, author=current_user.nick)
     else:
         return redirect(url_for('chat.assign'))
 
 
 @chat.route('/')
 def index():
-    return render_template('index.html')
+    nick = session.get('nick')
+    return render_template('index.html', nick=nick)
 
 
 @chat.route('/logout')
@@ -63,12 +64,13 @@ def assign():
     form = AssignForm()
     if request.method == 'GET':
         if 'role' in session and 'dialog' in session:
-            current_app.logger.info('Flashing errors') 
-            flash('You have a session already assigned. If you create a new one you cannot finish the current one!', 'error')
-        return render_template('assign.html', form=form)
+            role, dialog_id = session['role'], session['dialog']
+            current_app.logger.info('Flashing errors')
+            flash('You have a role %s and dialog already assigned. If you create a new one you cannot finish the current one!' % role, 'error')
+        return render_template('assign.html', form=form, role=role, dialog_id=dialog_id)
     elif form.validate_on_submit():
         current_app.logger.info('Assigned form validated')
-        role, session['dialog'] = db.assign_role_dialog()
+        role, session['dialog'] = ddb.assign_role_dialog(session['nick'])
         session['role'] = role
         flash(('You have been assigned role %s' % role, 'warning'))
         return redirect(url_for('chat.%s' % role))
@@ -91,6 +93,7 @@ def login():
             # FIXME not secure, todo implement next_is_valid
             # if not next_is_valid(next_red):
             #     return abort(400)
+            session['nick'] = form.name.data
             return redirect(next_red or url_for('chat.assign'))
         else:
             flash('Login failed, wrong creditials')

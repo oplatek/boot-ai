@@ -3,5 +3,14 @@
 {% extends "layout.html" %}
 
 {% block main %}
-  Todo instructions. Try to <a href="{{ url_for('chat.login') }}">login</a>.
+    {% if nick %}
+        <div>
+            Hello, {{ nick }}.
+        </div>
+        <div>
+            Please, <a href="{{ url_for('chat.assign') }}">select your role</a> or use the assigned to you.
+        </div>
+    {% else %}
+          Try to <a href="{{ url_for('chat.login') }}">login</a>.
+    {% endif %}
 {% endblock %}

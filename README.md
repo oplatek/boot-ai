@@ -21,3 +21,12 @@ Todos & remarks
 - TODO manage session via decorators and invalidate sessions if role and dialogue is not valid anymore and make it expire quite soon e.g. after few hours http://stackoverflow.com/questions/11783025/is-there-an-easy-way-to-make-sessions-timeout-in-flask
 - implement CountDown and TIMEOUTS for waiting on other side action-selection using https://github.com/shanealynn/async_flask/blob/master/application.py
 - Example app with eventlet side pushing of notification https://github.com/miguelgrinberg/Flask-SocketIO/blob/master/example/app.py
+
+- TODO TESTS
+    - 1. login 2. assign new dialog 3. check that 
+        - dialog_id and role is assign
+        - socketio connection is loaded and receiving messages both ways
+    - artificially setup user session and check login of socketio communication
+    - artificially setup two sessions and check that users and assistant member can communicate
+    - artificially setup three sessions (2 assistants and one user) and check that user and assistants member can communicate
+    - previous example vice versa 1 assistant and 2 users

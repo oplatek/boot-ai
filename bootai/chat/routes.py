@@ -53,7 +53,7 @@ def index():
 @chat.route('/logout')
 def logout():
     logout_user()
-    flash('You have been succesfully logout')
+    flash('You have been successfully logout', 'success')
     return redirect(url_for('chat.login'))
 
 
@@ -67,12 +67,14 @@ def assign():
             role, dialog_id = session['role'], session['dialog']
             current_app.logger.info('Flashing errors')
             flash('You have a role %s and dialog already assigned. If you create a new one you cannot finish the current one!' % role, 'error')
-        return render_template('assign.html', form=form, role=role, dialog_id=dialog_id)
+            return render_template('assign.html', form=form, role=role, dialog_id=dialog_id)
+        else:
+            return render_template('assign.html', form=form, role=role, dialog_id=dialog_id)
     elif form.validate_on_submit():
         current_app.logger.info('Assigned form validated')
         role, session['dialog'] = ddb.assign_role_dialog(session['nick'])
         session['role'] = role
-        flash(('You have been assigned role %s' % role, 'warning'))
+        flash('You have been assigned role %s' % role, 'warning')
         return redirect(url_for('chat.%s' % role))
     else:
        return render_template('assign.html', form=form)
@@ -96,7 +98,7 @@ def login():
             session['nick'] = form.name.data
             return redirect(next_red or url_for('chat.assign'))
         else:
-            flash('Login failed, wrong creditials')
+            flash('Login failed, wrong creditials', 'error')
             return redirect(url_for('chat.login'))
     return render_template('login.html', form=form)
 

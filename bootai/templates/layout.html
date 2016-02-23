@@ -45,7 +45,7 @@
                 <div id='flash_message_container'>
                     {% for category, msg in messages %}
                         <div class="alert alert-{{ category }}">
-                            <button type="button" class="close" data-dismiss="alert">×</button>
+                            <button type="button" class="close" data-dismiss="alert" onclick="this.parentNode.style.display='none';">×</button>
                             {{ msg }}
                         </div>
                     {% endfor %}

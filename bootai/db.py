@@ -6,7 +6,7 @@ from heapq import heappop, heappush
 from enum import Enum
 from collections import Counter
 import json
-from os.path import isdir, join, exists
+from os.path import join, exists
 import uuid
 import random
 import time
@@ -319,14 +319,14 @@ class Utterance(object):
         return self.__hash__() == other.__hash__()
 
     def _dict(self):
-        return  {
-                "turn": self.turn,
-                "author": self.author,
-                "role": self.role,
-                "selected": self.selected,
-                "text": self.text,
-                "dialog_id": self._dialog.dialog_id
-                }
+        return {
+            "turn": self.turn,
+            "author": self.author,
+            "role": self.role,
+            "selected": self.selected,
+            "text": self.text,
+            "dialog_id": self._dialog.dialog_id
+        }
 
     def __repr__(self):
         return str(self._dict())

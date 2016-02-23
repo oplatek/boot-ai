@@ -21,6 +21,7 @@ Todos & remarks
 - TODO manage session via decorators and invalidate sessions if role and dialogue is not valid anymore and make it expire quite soon e.g. after few hours http://stackoverflow.com/questions/11783025/is-there-an-easy-way-to-make-sessions-timeout-in-flask
 - implement CountDown and TIMEOUTS for waiting on other side action-selection using https://github.com/shanealynn/async_flask/blob/master/application.py
 - Example app with eventlet side pushing of notification https://github.com/miguelgrinberg/Flask-SocketIO/blob/master/example/app.py
+- todo at forms and search http://react-bootstrap.github.io/components.html#forms
 
 - TODO TESTS
     - 1. login 2. assign new dialog 3. check that 

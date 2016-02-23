@@ -15,6 +15,7 @@ var Alert = ReactBootstrap.Alert;
 var Grid = ReactBootstrap.Grid;
 var Row = ReactBootstrap.Row;
 var Col = ReactBootstrap.Col;
+var Input = ReactBootstrap.Input;
 
 var socket;
 var db;
@@ -65,7 +66,7 @@ var MsgAnnouncer = React.createClass({
       return ( <Alert bsStyle={m.style} key={m.id}>{m.text}</Alert>);
     });
     return (
-      <div class="container">
+      <div className="container">
         {msgAlerts}
         <ProgressBar>
           <ProgressBar striped bsStyle="success" now={this.props.stats.correct} key={1} />
@@ -80,11 +81,11 @@ var MsgAnnouncer = React.createClass({
 var HistoryView = React.createClass({
   render() {
     var msgHistories = this.props.msgs.map(function(m) {
-      // FIXME key and how to select multiple options
-      return (<ListGroupItem href="#?TODO" header={m.author}>{m.text}</ListGroupItem>);
+      // FIXME key and callback how to select multiple options
+      return (<ListGroupItem href="#?TODO" key={m.turn} header={m.author}>{m.text}</ListGroupItem>);
     });
     return (
-        <div class="actionselectionview">
+        <div className="actionselectionview">
           <div className="column-header">
             <h3>Select Reasons</h3>
           </div>
@@ -98,21 +99,52 @@ var HistoryView = React.createClass({
 
 
 var ActionSelectView = React.createClass({
+  getInitialState() {
+    return {new_action:''}
+  }, 
+  selectAction(e) {
+    var key_action = 0;
+    console.log('Selected action has key TODO', key_action);
+    this.props.selectActionHandler(key_action);
+  },
+  validationNew() {
+    let length = this.state.new_action.length;
+    // TODO proper validation
+    if (length < 10) {return 'success'}  else return 'error';
+  },
+  handleNewChange() {
+    new_text = 'this is text of the new action';
+    // handler for registering errors
+    // TODO check that text of the action is not similar to none of the others
+    this.props.newActionHandler(new_text);
+// TODO hit enter
+  },
+  
   render() {
+    var actionMsgs = this.props.actions.map((m) => {
+      // FIXME key and callback
+      var new_actions_only = false;
+      // we suppose that for two actions  holds a !=b iff a.text != b.text
+      return (<ListGroupItem href="#?TODO" key={m.text} disabled={new_actions_only} active={m.selected} onClick={this.selectAction}>{m.text}</ListGroupItem>)}
+    );
     return (
-      <div clas="historyview">
+      <div clas="actionview">
         <div className="column-header">
           <h3>Select the Best Action</h3>
         </div>
         <ListGroup>
-          <ListGroupItem href="#" active>Todo generate dynamicly from the json</ListGroupItem>
-          <ListGroupItem href="#">todo 2</ListGroupItem>
-          <ListGroupItem href="#" disabled>todo - others disabled  3</ListGroupItem>
+          {actionMsgs}
         </ListGroup>
-        <div className="form-group">
-            <label for="new_action">Your proposal if above actions are not applicable:</label>
-              <textarea className="form-control" rows="5" id="new_action">You can use # for database entities and e.g. @user1 for selecting reasons"</textarea>
-        </div>
+          <Input type="text" 
+            value={this.state.new_action}
+            placeholder="Write new reply if none of above is OK for you!"
+            label="Suggested reply"
+            bsStyle={this.validationNew()}
+            ref="new_action_input"
+            groupClassName="group-class"
+            labalClassName="label-class"
+            onChange={this.handleNewChange}
+          />
       </div>);
   },
 });
@@ -145,7 +177,7 @@ var DbView = React.createClass({
   },
   render() {
     return (
-      <div class="dbview">
+      <div className="dbview">
         <div className="column-header">
           <h3>Find and Mark Info</h3>
         </div>
@@ -188,7 +220,8 @@ var ActionSelect = React.createClass({
     return {
       stats: {correct: 0, created: 0, errors: 0}, 
       msgs:[],
-      actions_proposed: [],
+      actions: [],
+      new_actions: [],
       action_selected: [],
       history: [],
     };
@@ -236,7 +269,6 @@ var ActionSelect = React.createClass({
   },
 
   _historyReceive(new_history) {
-    console.log(history, new_history);
     var {history} = this.state;
     history = new_history;
     this.setState({history});
@@ -247,9 +279,19 @@ var ActionSelect = React.createClass({
     }
   },
 
-  _actionsReceive(msgs) {
-    console.log('receive actions', msgs);
-    // TODO
+  _actionsRecieve(proposed_actions) {
+    var {actions} = this.state;
+    actions = proposed_actions;
+    this.setState({actions});
+    if (actions.length > 0) {
+      console.log('Actions[0]', actions[0]);
+    } else {
+      console.log('No actions were received!', actions);
+    }
+  },
+
+  _actionsSelected(e) {
+    console.log('Action selecte: todo e', e);
   },
 
   _new_actionsReceive(msgs) {
@@ -277,7 +319,7 @@ var ActionSelect = React.createClass({
               <HistoryView msgs={this.state.history} />
             </Col>
             <Col xs={4} md={4}>
-              <ActionSelectView/>
+              <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} selectActionHandler={this._actionsSelected} />
             </Col>
             <Col xs={4} md={4}>
               <DbView/>

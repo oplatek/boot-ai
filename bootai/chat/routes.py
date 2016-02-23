@@ -18,6 +18,7 @@ def _redirect_to_role(role):
 def assistant():
     current_app.logger.info("Rendering assistant view")
     dialog_id = session.get('dialog', None)
+    dialog = ddb.get_dialog(session['dialog'])
     role = session.get('role', None)
     if dialog_id and role:
         if role == Role.user:

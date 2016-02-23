@@ -91,7 +91,8 @@ def join_dialog(msg):
           'id': get_msg_key(),
           'text': 'Your, role is %s' % session['role']},
          room=get_userdialog_key())
-    TurnCallback(dialog, role)(Utterance.get_dummy_start(dialog))
+    last_utt = dialog.selected_utts[-1] if dialog.last_turn_finished > 0 else Utterance.get_dummy_start(dialog)
+    TurnCallback(dialog, role)(last_utt)
 
 
 @socketio.on('leave', namespace='/api')

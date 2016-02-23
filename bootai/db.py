@@ -83,7 +83,7 @@ class Response(object):
             self._call_back(winner)
 
     def __hash__(self):
-        return hash(self.__str__())
+        return hash(self.__repr__())
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
@@ -154,7 +154,7 @@ class User(UserMixin):
 
     @classmethod
     def get(cls, nick):
-        logging.warn('TODO check that user can be created, return None if not valid')
+        logger.warn('TODO check that user can be created, return None if not valid')
         return cls(nick)
 
 
@@ -165,21 +165,21 @@ class DialogDB(object):
 
     def __init__(self, path):
         self.path = path
-        self.cache = {}
 
     def _dialog_path(self, dialog_id):
         return join(self.path, dialog_id + '.json')
 
-    def get_dialog(key):
-        path = self._dialog_path(key)
-        if not exists(path):
+    def get_dialog(self, key):
+        pth = self._dialog_path(key)
+        if not exists(pth):
             raise RuntimeError("Dialog %s cannot be found", key)
-        with open(path, 'r') as r:
+        with open(pth, 'r') as r:
             dialog = Dialog.from_json(r)
         return dialog
 
-    def get_dialog(self, dialog_id:str) -> None:
-        return self.cache[dialog_id]
+    @staticmethod
+    def _get_dialog_id(self):
+        return 'dialog-%s-%04d' % (time.strftime('%y%m%d-%H-%M-%S'), random.randint(0, 9999))
 
     def assign_role_dialog(self, nick, dialog_id=None):
         # FIXME group users together, find appropriate dialog and role
@@ -198,11 +198,10 @@ class DialogDB(object):
             else:
                 raise KeyError("Dialog %s not found in DB", dialog_path)
         else:
-            dialog_id = 'dialog-%s-%04d' % (time.strftime('%y%m%d-%H-%M-%S'), random.randint(0, 9999))
+            dialog_id = DialogDB._get_dialog_id()
             dialog_path = self._dialog_path(dialog_id)
             dialog = Dialog(dialog_id=dialog_id, path=dialog_path)
             dialog.save()
-            self.cache[dialog_id] = dialog
             role = Role.assistant
         return role, dialog_id
 
@@ -218,6 +217,7 @@ class ComplexEncoder(json.JSONEncoder):
 class Dialog(object):
     assist_model = None
     user_model = None
+    __props_serialize__ = set(['dialog_id', 'similar_id', 'selected', 'turn_alternatives', 'turn_users', 'turn_assistants'])
 
     def __init__(self, dialog_id=None, similar_id=None, path=None):
         if dialog_id:
@@ -237,6 +237,19 @@ class Dialog(object):
         self.turn_assistants = []
 
     @property
+    def self_dict(self):
+        # sanity check
+        d = {}
+        for p in self.__class__.__props_serialize__:
+            d[p] = getattr(self, p)
+        return d
+
+    @self_dict.setter
+    def self_dict(self, d):
+        for p in self.__class__.__props_serialize__:
+            setattr(self, p, d[p])
+
+    @property
     def user_model(self):
         m = self.__class__.user_model
         assert m is not None
@@ -250,9 +263,10 @@ class Dialog(object):
 
     @classmethod
     def from_json(cls, json_file):
-        raise NotImplementedError()
-        dialog_dict = {"todo": "parse"}
-        return cls(dialog_dict)
+        dialog_dict = json.load(json_file)
+        d = cls(dialog_dict)
+        d.self_dict = dialog_dict
+        return d
 
     def __repr_json__(self):
         self_dict = {
@@ -265,6 +279,7 @@ class Dialog(object):
                 }
         # TODO FIX missing items in self_dict") 
         return json.dumps(self_dict, cls=ComplexEncoder)
+
 
     def save(self, path=None):
         if not path:
@@ -287,11 +302,11 @@ class Dialog(object):
         return diff == 0
 
     def assistant_suggestions(self, n=10):
-        hist = self.selected_history()
+        hist = self.selected_history
         return self.assist_model.predict(hist, n) 
 
     def user_suggestions(self, n=10):
-        hist = self.selected_history()
+        hist = self.selected_history
         return self.user_model.predict(hist, n) 
 
     def __hash__(self):

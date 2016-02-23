@@ -79,74 +79,129 @@ var MsgAnnouncer = React.createClass({
 });
 
 var HistoryView = React.createClass({
-  render() {
-    var msgHistories = this.props.msgs.map(function(m) {
-      // FIXME key and callback how to select multiple options
-      return (<ListGroupItem href="#?TODO" key={m.turn} header={m.author}>{m.text}</ListGroupItem>);
-    });
-    return (
-        <div className="actionselectionview">
-          <div className="column-header">
-            <h3>Select Reasons</h3>
-          </div>
-          <ListGroup>
-          {msgHistories}
-          </ListGroup>
-        </div>
-        );
-  },
+    getDefaultProps() {
+        return {
+            author: '',
+            msgs:[],
+        }
+    },
+    getInitialState() {
+        return { selections: {},}
+    },
+    handleSelectItem(m) {
+        console.log('Selected action key: ' + m.key + ' and text ' + m.value);
+        this.props.onSelectedAction(m.value);
+        // make it multiple option
+        var selections = this.props.selections
+        selections[m.key] = !selections[m.key]
+        this.props.selections = selections
+    },
+    createActionItem(m) {
+        var text_author = this.props.author == m.author ? 'You' : 'System';
+        return (<ListGroupItem key={m.turn} active={this.state.selections[m.key] ? true: false} header={text_author} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
+    },
+    render() {
+        return (
+            <div className="actionselectionview">
+              <div className="column-header">
+                <h3>Select Reasons</h3>
+              </div>
+              <ListGroup>
+                  {this.props.msgs.map(this.createActionItem, this)}
+              </ListGroup>
+            </div>
+        )
+      },
 });
 
+var ActionSelectView;
+ActionSelectView = React.createClass({
+    getDefaultProps() {
+        return {
+            actions: [],
+            collect_new: true,
+            handleNewActionSubmit: function () {
+            },
+            onSelectedAction: function (action_text) {
+                console.log('NotImplemented callback onSelectedAction: ', action_text);
+            },
+            onNewAction: function (action_text) {
+                console.log('NotImplemented callback onNewAction', action_text);
+            },
+            notifyUser: function (msg) {
+                console.log("callback for sending msgs to user: ", m.text, m.style);
+            }
+        }
+    },
+    getInitialState() {
+        return {
+            selections: {},
+            new_action: '',
+        }
+    },
+    handleSelectItem(m) {
+        console.log('Selected action key: ' + m.key + ' and text ' + m.value);
+        this.props.onSelectedAction(m.value);
+        // make it single option
+        var key = m.key
+        var selections = {key: true}
+        this.props.selections = selections
+    },
+    validationNew(send_msgs = false) {
+        let text = this.state.new_action.trim();
+        let notify = !this.props.notifyUser;
+        if (text.length < 2) {
+            if (send_msgs) notify({'text': 'Do not submit empty message!', 'style': 'error'});
+            return 'error';
+        }
+        if (text in this.props.actions) {
+            if (send_msgs) notify({
+                'text': 'Submit only original action! "' + text + '" is already in actions',
+                'style': 'error'
+            });
+            return 'error';
+        }
+        return 'success';
+    },
+    handleNewChange(e) {
+        this.setState({new_action: e.target.value});
+    },
 
-var ActionSelectView = React.createClass({
-  getInitialState() {
-    return {new_action:''}
-  }, 
-  selectAction(e) {
-    var key_action = 0;
-    console.log('Selected action has key TODO', key_action);
-    this.props.selectActionHandler(key_action);
-  },
-  validationNew() {
-    let length = this.state.new_action.length;
-    // TODO proper validation
-    if (length < 10) {return 'success'}  else return 'error';
-  },
-  handleNewChange() {
-    new_text = 'this is text of the new action';
-    // handler for registering errors
-    // TODO check that text of the action is not similar to none of the others
-    this.props.newActionHandler(new_text);
-// TODO hit enter
-  },
-  
-  render() {
-    var actionMsgs = this.props.actions.map((m) => {
-      // FIXME key and callback
-      var new_actions_only = false;
-      // we suppose that for two actions  holds a !=b iff a.text != b.text
-      return (<ListGroupItem href="#?TODO" key={m.text} disabled={new_actions_only} active={m.selected} onClick={this.selectAction}>{m.text}</ListGroupItem>)}
-    );
-    return (
-      <div clas="actionview">
-        <div className="column-header">
-          <h3>Select the Best Action</h3>
-        </div>
-        <ListGroup>
-          {actionMsgs}
-        </ListGroup>
-          <Input type="text" 
-            value={this.state.new_action}
-            placeholder="Write new reply if none of above is OK for you!"
-            label="Suggested reply"
-            bsStyle={this.validationNew()}
-            ref="new_action_input"
-            groupClassName="group-class"
-            labalClassName="label-class"
-            onChange={this.handleNewChange}
-          />
-      </div>);
-  },
+    handleNewActionSubmit() {
+        e.preventDefault();
+        var status = validationNew(send_msgs = true);
+        var new_text = this.state.new_action.trim();
+        this.props.onNewAction(new_text);
+    },
+
+    createActionItem(m) {
+        return (<ListGroupItem key={m.text} active={this.state.selections[m.key] ? true: false} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
+    },
+
+    render() {
+        return (
+            <div clas="actionview">
+                <div className="column-header">
+                    <h3>Select the Best Action</h3>
+                </div>
+                <ListGroup>
+                    {this.props.actions.map(this.createActionItem, this)}
+                </ListGroup>
+                {this.props.collect_new ?
+                    <Input type="text"
+                           value={this.state.new_action}
+                           placeholder="If none of actions above don't fit contribute one!"
+                           label="Suggested reply"
+                           bsStyle={this.validationNew()}
+                           groupClassName="group-class"
+                           labalClassName="label-class"
+                           onChange={this.handleNewChange}
+                           onsubmit={this.handleNewActionSubmit}
+                    />
+                    : <Well>Choose one from the above actions</Well>
+                }
+            </div>);
+    },
 });
 
 var DbView = React.createClass({
@@ -294,6 +349,10 @@ var ActionSelect = React.createClass({
     console.log('Action selecte: todo e', e);
   },
 
+  _userSuggestedAction(action_text) {
+      console.log('User suggested action ', action_text);
+  },
+
   _new_actionsReceive(msgs) {
     console.log('receive actions', msgs);
     // TODO
@@ -319,7 +378,7 @@ var ActionSelect = React.createClass({
               <HistoryView msgs={this.state.history} />
             </Col>
             <Col xs={4} md={4}>
-              <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} selectActionHandler={this._actionsSelected} />
+              <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} selectActionHandler={this._actionsSelected} newActionHandler={this._userSuggestedAction}/>
             </Col>
             <Col xs={4} md={4}>
               <DbView/>

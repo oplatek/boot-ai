@@ -19,15 +19,47 @@ from threading import Thread, Event  # FIXME disable monkypatching
 logger = logging.getLogger(__name__)
 
 
-class Role(Enum):
+class ComplexEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, '__repr_dict__'):
+            return obj.__repr_dict__
+        else:
+            return json.JSONEncoder.default(self, obj)
+
+
+class JsonEncodable(object):
+    __props_serialize__ = None  # use it as set
+
+    @property
+    def __repr_dict__(self):
+        # sanity check
+        d = {"class": self.__class__.__name__}
+        for p in self.__class__.__props_serialize__:
+            d[p] = getattr(self, p)
+        return d
+
+    @__repr_dict__.setter
+    def __repr_dict__(self, d):
+        for p in self.__class__.__props_serialize__:
+            setattr(self, p, d[p])
+
+
+def complex_decoder(d):
+    if 'class' in d:
+        c = globals()[d['class']]
+        c.__repr_dict__ = d
+        return c
+    else:
+        return d
+
+
+class Role(JsonEncodable, Enum):
+    __props_serialize__ = set(['name'])  # use it as set
     assistant = 1
     user = 2
 
     def __str__(self):
         return self.name
-
-    def __repr_json__(self):
-        return str(self)
 
     def next(self):
         if self == Role.assistant:
@@ -175,10 +207,11 @@ class DialogDB(object):
             raise RuntimeError("Dialog %s cannot be found", key)
         with open(pth, 'r') as r:
             dialog = Dialog.from_json(r)
+            dialog.path = pth
         return dialog
 
     @staticmethod
-    def _get_dialog_id(self):
+    def _get_dialog_id():
         return 'dialog-%s-%04d' % (time.strftime('%y%m%d-%H-%M-%S'), random.randint(0, 9999))
 
     def assign_role_dialog(self, nick, dialog_id=None):
@@ -188,6 +221,7 @@ class DialogDB(object):
             if exists(dialog_path):
                 with open(dialog_path, 'r') as r:
                     dialog = Dialog.from_json(r)
+                    dialog.path = dialog_path
                 if dialog.last_turn_selected == 0:
                     role = Role.assistant
                 else:
@@ -199,55 +233,32 @@ class DialogDB(object):
                 raise KeyError("Dialog %s not found in DB", dialog_path)
         else:
             dialog_id = DialogDB._get_dialog_id()
-            dialog_path = self._dialog_path(dialog_id)
-            dialog = Dialog(dialog_id=dialog_id, path=dialog_path)
-            dialog.save()
+            dialog = Dialog(dialog_id=dialog_id)
+            dialog.save(self._dialog_path(dialog_id))
             role = Role.assistant
         return role, dialog_id
 
 
-class ComplexEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if hasattr(obj, '__repr_json__'):
-            return obj.__repr_json__()
-        else:
-            return json.JSONEncoder.default(self, obj)
-
-
-class Dialog(object):
+class Dialog(JsonEncodable):
     assist_model = None
     user_model = None
-    __props_serialize__ = set(['dialog_id', 'similar_id', 'selected', 'turn_alternatives', 'turn_users', 'turn_assistants'])
+    __props_serialize__ = set(['dialog_id', 'similar_id', 'selected_utts', 'turn_alternatives', 'turn_users', 'turn_assistants'])
 
-    def __init__(self, dialog_id=None, similar_id=None, path=None):
-        if dialog_id:
-            self.dialog_id = dialog_id
+    def __init__(self, dialog_id=None, similar_id=None):
+        if dialog_id is None:
+            self.dialog_id = str(uuid.uuid1())
         else:
-            self.dialog_id = uuid.uuid1()
+            self.dialog_id = str(dialog_id)
 
         # if two dialogs were collected based on shared history they should have identical similar_id
         if similar_id:
             self.similar_id = similar_id
         else:
             self.similar_id = self.dialog_id
-        self.path = path
         self.selected_utts = []
         self.turn_alternatives = []
         self.turn_users = []
         self.turn_assistants = []
-
-    @property
-    def self_dict(self):
-        # sanity check
-        d = {}
-        for p in self.__class__.__props_serialize__:
-            d[p] = getattr(self, p)
-        return d
-
-    @self_dict.setter
-    def self_dict(self, d):
-        for p in self.__class__.__props_serialize__:
-            setattr(self, p, d[p])
 
     @property
     def user_model(self):
@@ -263,29 +274,15 @@ class Dialog(object):
 
     @classmethod
     def from_json(cls, json_file):
-        dialog_dict = json.load(json_file)
-        d = cls(dialog_dict)
-        d.self_dict = dialog_dict
+        dialog_dict = json.load(json_file, object_hook=complex_decoder)
+        d = cls()
+        d.__repr_dict__ = dialog_dict
         return d
 
-    def __repr_json__(self):
-        self_dict = {
-                    "dialog_id": self.dialog_id,
-                    "similar_id":  self.similar_id,
-                    "selected": self.selected_utts,
-                    "turn_alternatives": self.turn_alternatives,
-                    "turn_users": self.turn_users,
-                    "turn_assistants": self.turn_assistants,
-                }
-        # TODO FIX missing items in self_dict") 
-        return json.dumps(self_dict, cls=ComplexEncoder)
-
-
-    def save(self, path=None):
-        if not path:
-            path = self.path
-        with open(path, 'w') as w:
-            json.dump(self, w, cls=ComplexEncoder)
+    def save(self, pth):
+        logger.debug('Saving dialog to %s', pth)
+        with open(pth, 'w') as w:
+            json.dump(self.__repr_dict__, w, cls=ComplexEncoder)
 
     @property
     def selected_history(self):
@@ -313,8 +310,9 @@ class Dialog(object):
         return hash(self.dialog_id)
 
 
-class Utterance(object):
-    
+class Utterance(JsonEncodable):
+    __props_serialize__ = set(['turn', 'author', 'role', 'selected', 'text'])
+
     @classmethod
     def get_dummy_start(cls, dialog):
         return cls(0, Role.assistant, 'DUMMY_START', 'DUMMY_START', dialog, selected=True)
@@ -333,18 +331,5 @@ class Utterance(object):
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()
 
-    def _dict(self):
-        return {
-            "turn": self.turn,
-            "author": self.author,
-            "role": self.role,
-            "selected": self.selected,
-            "text": self.text,
-            "dialog_id": self._dialog.dialog_id
-        }
-
     def __repr__(self):
-        return str(self._dict())
-
-    def __repr_json__(self):
-        return json.dumps(self._dict(), cls=ComplexEncoder)
+        return str(self.__repr_dict__)

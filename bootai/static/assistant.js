@@ -92,9 +92,9 @@ var HistoryView = React.createClass({
         console.log('Selected action key: ' + m.key + ' and text ' + m.value);
         this.props.onSelectedAction(m.value);
         // make it multiple option
-        var selections = this.props.selections
+        var selections = this.state.selections
         selections[m.key] = !selections[m.key]
-        this.props.selections = selections
+        this.state.selections = selections
     },
     createActionItem(m) {
         var text_author = this.props.author == m.author ? 'You' : 'System';
@@ -145,7 +145,7 @@ ActionSelectView = React.createClass({
         // make it single option
         var key = m.key
         var selections = {key: true}
-        this.props.selections = selections
+        this.state.selections = selections
     },
     validationNew(send_msgs = false) {
         let text = this.state.new_action.trim();
@@ -305,6 +305,7 @@ var ActionSelect = React.createClass({
       socket.emit('join_dialog', {}); 
       console.log('socketio.emit: join_dialog');
     });
+    socket.on('redirect', function(msg){ window.location = msg.url; });
     socket.on('messages', this._messagesReceive);
     socket.on('history', this._historyReceive);
     socket.on('actions', this._actionsRecieve);

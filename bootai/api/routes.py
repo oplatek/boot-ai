@@ -2,7 +2,7 @@ import json
 import uuid
 import logging
 from os import path
-from flask import Response, current_app, Blueprint, session
+from flask import Response, current_app, Blueprint, session, url_for, flash
 from flask.ext.socketio import emit, join_room, leave_room
 from .. import socketio, ddb, pq, db, model as mdl
 from ..db import Role, Utterance, Dialog
@@ -76,23 +76,31 @@ def proposed_action(msg):
 @socketio.on('join_dialog', namespace='/api')
 def join_dialog(msg):
     logger.info('join_dialog: %s', msg)
-    dialog, role = ddb.get_dialog(session['dialog']), getattr(Role, session['role'])
-    join_room(get_dialog_key(dialog_id=dialog.dialog_id))
-    join_room(get_roledialog_key(role=role, dialog_id=dialog.dialog_id))
-    join_room(get_userdialog_key(dialog_id=dialog.dialog_id))
-    players_live = 666  # todo use the db
-    emit('messages',
-         {'style': 'info',
-          'id': get_msg_key(),
-          'text': 'Welcome %s, number players online in this dialog: %d.' % (session['nick'], players_live)},
-         room=get_dialog_key())
-    emit('messages',
-         {'style': 'info',
-          'id': get_msg_key(),
-          'text': 'Your, role is %s' % session['role']},
-         room=get_userdialog_key())
-    last_utt = dialog.selected_utts[-1] if dialog.last_turn_finished > 0 else Utterance.get_dummy_start(dialog)
-    TurnCallback(dialog, role)(last_utt)
+    try:
+        dialog, role = ddb.get_dialog(session['dialog']), getattr(Role, session['role'])
+        join_room(get_dialog_key(dialog_id=dialog.dialog_id))
+        join_room(get_roledialog_key(role=role, dialog_id=dialog.dialog_id))
+        join_room(get_userdialog_key(dialog_id=dialog.dialog_id))
+        players_live = 666  # todo use the db
+        emit('messages',
+             {'style': 'info',
+              'id': get_msg_key(),
+              'text': 'Welcome %s, number players online in this dialog: %d.' % (session['nick'], players_live)},
+             room=get_dialog_key())
+        emit('messages',
+             {'style': 'info',
+              'id': get_msg_key(),
+              'text': 'Your, role is %s' % session['role']},
+             room=get_userdialog_key())
+        last_utt = dialog.selected_utts[-1] if len(dialog.selected_utts) > 0 else Utterance.get_dummy_start(dialog)
+        TurnCallback(dialog, role)(last_utt)
+    except Exception as e:
+        redirect_add = 'chat.assign'
+        del session['dialog']
+        del session['role']
+        msg = 'Error encountered. Redirecting to %s' % redirect_add
+        logger.exception(msg)
+        emit('redirect', {'url': url_for(redirect_add)})
 
 
 @socketio.on('leave', namespace='/api')
@@ -107,15 +115,14 @@ def leave(msg):
          room=get_dialog_key())
 
 
-def send_history(history, dialog_id, namespace='/api'):
+def send_history(history: Utterance, dialog_id: str, namespace='/api'):
     logger.debug('history: %s', history if len(history) < 3 else history[0:2])
-    # history_msg = json.dumps([{'text': u.text, 'author': u.author} for u in history])
     history_msg = [{'text': u.text, 'author': u.author, 'turn': u.turn} for u in history]
-    socketio.emit('history', history_msg, room=get_dialog_key(dialog_id=dialog_id), namespace='/api')
+    socketio.emit('history', history_msg, room=get_dialog_key(dialog_id=dialog_id), namespace=namespace)
 
 
 class TurnCallback(object):
-    def __init__(self, dialog: Dialog, role: Role, timeout_s=2):
+    def __init__(self, dialog: Dialog, role: Role, timeout_s=2000):
         self.dialog = dialog
         self.role = role
         self.proposed_actions = mdl.predict_actions(self.dialog, self.role)
@@ -125,7 +132,7 @@ class TurnCallback(object):
         if self.proposed_actions:
             self.dialog.turn_alternatives.append(self.proposed_actions)  # FIXME not api
             self.dialog.selected_utts.append(selected)
-            self.dialog.save()
+            self.dialog.save(ddb._dialog_path(self.dialog.dialog_id))
             logger.info('TurnCallback was called with selected action %s', selected)
             dialog_id = self.dialog.dialog_id
             socketio.emit('messages',

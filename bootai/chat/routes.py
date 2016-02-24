@@ -74,7 +74,7 @@ def assign():
     elif form.validate_on_submit():
         current_app.logger.info('Assigned form validated')
         role, session['dialog'] = ddb.assign_role_dialog(session['nick'])
-        session['role'] = role
+        session['role'] = str(role)
         flash('You have been assigned role %s' % role, 'warning')
         return redirect(url_for('chat.%s' % role))
     else:

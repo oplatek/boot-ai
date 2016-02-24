@@ -60,13 +60,12 @@ def new_action(msg):
     emit('new_action', msg, room=role_room())
 
 
-@socketio.on('proposed_action', namespace='/api')
-def proposed_action(msg):
-    timeout_select, timeout_turn, user_messages = ddb.record_action_selection(msg)
-    for msg in user_messages:
-        if 'id' not in msg:
-            msg['id'] = get_msg_key()
-        emit('messages', msg, room=get_userdialog_key())
+@socketio.on('action_selected', namespace='/api')
+def action_selected(msg):
+    logger.info('Action selected', msg)
+    # TODO implement voting if it is enough
+    timeout_select, timeout_turn = True, True
+    # timeout_select, timeout_turn, user_messages = ddb.record_action_selection(msg)
     if timeout_select:
         emit('timeout_select', '', room=get_roledialog_key())
     if timeout_turn:
@@ -122,7 +121,7 @@ def send_history(history: Utterance, dialog_id: str, namespace='/api'):
 
 
 class TurnCallback(object):
-    def __init__(self, dialog: Dialog, role: Role, timeout_s=2):
+    def __init__(self, dialog: Dialog, role: Role, timeout_s=2000):
         self.dialog = dialog
         self.role = role
         self.proposed_actions = mdl.predict_actions(self.dialog, self.role)
@@ -140,8 +139,6 @@ class TurnCallback(object):
                            'style': 'danger'},
                           room=get_roledialog_key(role=self.role, dialog_id=dialog_id),
                           namespace='/api')
-            # see send_history
-
             send_history(self.dialog.selected_history, dialog_id=dialog_id)
             actions_msg = [{'text': a.text, 'selected': a.selected} for a in self.proposed_actions]
             socketio.emit('actions', actions_msg,

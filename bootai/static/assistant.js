@@ -20,6 +20,7 @@ var Input = ReactBootstrap.Input;
 var socket;
 var db;
 
+// TODO show help locally
 const navbarInstance = (
   <Navbar inverse fixed-top>
     <Navbar.Header>
@@ -87,7 +88,7 @@ var HistoryView = React.createClass({
     },
     createHistoryItem(m) {
         var turn_role = m.turn + ':' + (this.props.role == m.role ? 'You' : 'System');
-        console.log('DEBUG createHistoryItem turn_role ', turn_role, 'props.role', this.props.role, m.role)
+        //console.log('DEBUG createHistoryItem turn_role ', turn_role, 'props.role', this.props.role, m.role)
         return (<ListGroupItem key={turn_role} active={this.state.selections[turn_role] ? true: false} header={turn_role} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
     },
     render() {
@@ -120,7 +121,7 @@ ActionSelectView = React.createClass({
             onNewAction: function (action_text) {
                 console.log('NotImplemented callback onNewAction', action_text);
             },
-            notifyUser: function (msg) {
+            notifyUser: function (msgs) {
                 console.log("callback for sending msgs to user: ", m.text, m.style);
             }
         }
@@ -146,7 +147,7 @@ ActionSelectView = React.createClass({
     },
     validationNew(send_msgs = false) {
         let text = this.state.new_action.trim();
-        let notify = !this.props.notifyUser;
+        let notify = this.props.notifyUser;
         if (text.length < 2) {
             if (send_msgs) notify({'text': 'Do not submit empty message!', 'style': 'error'});
             return 'error';
@@ -163,18 +164,15 @@ ActionSelectView = React.createClass({
     handleNewChange(e) {
         this.setState({new_action: e.target.value});
     },
-
     handleNewActionSubmit() {
         e.preventDefault();
         var status = validationNew(send_msgs = true);
         var new_text = this.state.new_action.trim();
         this.props.onNewAction(new_text);
     },
-
     createActionItem(m) {
         return (<ListGroupItem key={m.text} active={this.state.selections[m.text] ? true: false} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
     },
-
     render() {
         console.log('Render(): selection:', this.state.selections)
         return (
@@ -310,17 +308,15 @@ var ActionSelect = React.createClass({
     socket.on('timeout_select', this._timeout_select);
     socket.on('timeout_turn', this._timeout_turn);
   },
-
-  _messagesReceive(new_msgs) {
+  _messagesReceive(new_msg) {
     var {msgs} = this.state;
-    msgs.push(new_msgs);
+    msgs.push(new_msg);
     if (msgs.length > 3) {
       msgs.shift()
     };
     this.setState({msgs});
-    console.log('Updated msgs:', msgs, 'after new_msgs added', new_msgs);
+    console.log('Updated msgs:', msgs, 'after new_msg added', new_msg);
   },
-
   _historyReceive(new_history) {
     var {history} = this.state;
     history = new_history;
@@ -331,7 +327,6 @@ var ActionSelect = React.createClass({
       console.log('Empty history', new_history);
     }
   },
-
   _actionsRecieve(proposed_actions) {
     var {actions} = this.state;
     actions = proposed_actions;
@@ -342,28 +337,23 @@ var ActionSelect = React.createClass({
       console.log('No actions were received!', actions);
     }
   },
-
-  _actionsSelected(e) {
-    console.log('Action selecte: todo e', e);
+  _actionsSelected(text) {
+      console.log('Action selected: ', text);
+      socket.emit('action_selected', {'role': this.props.role, 'text': text});
   },
-
   _userSuggestedAction(action_text) {
       console.log('User suggested action ', action_text);
   },
-
   _new_actionsReceive(msgs) {
     console.log('receive actions', msgs);
-    // TODO
+    // TODO append it to the actions already displayed by action select
   },
-
   _timeout_select(msgs) {
     console.log('timeout select');
   },
-
   _timeout_turn(msgs) {
     console.log('timeout turn');
   },
-
   render() {
     return (
       <div>
@@ -376,7 +366,7 @@ var ActionSelect = React.createClass({
               <HistoryView msgs={this.state.history} role={this.props.role} />
             </Col>
             <Col xs={4} md={4}>
-              <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} selectActionHandler={this._actionsSelected} newActionHandler={this._userSuggestedAction}/>
+              <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} onSelectedAction={this._actionsSelected} onNewAction={this._userSuggestedAction} notifyUser={this._messagesReceive} />
             </Col>
             <Col xs={4} md={4}>
               <DbView/>

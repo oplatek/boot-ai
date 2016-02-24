@@ -20,23 +20,6 @@ var Input = ReactBootstrap.Input;
 var socket;
 var db;
 
-// TODO load the data
-var history = [
-    {id:0, value: "Good morning. How may I help you?", reason: false, author: "id-you"},
-    {id:1, value: "I would like to know what is the nearest Sweet shop near Fisherman's wharf?", reason: false, author: "id-other-1"},
-    {id:2, value: "Give me few seconds. I will look it up.", reason: false, author: "id-you"},
-    {id:3, value: "Sure", reason: false, author: "id-other-2"},
-    {id:4, value: "Select new action from the options and mark at least one from the actions above as reasons why you have chosen that action", reason: false, author: "id-you"}
-    ];
-
-// TODO load the data
-var actions = [ {id:1, value: "Give me a bit more time...", selected: false, author: "crowd-1"},
-    {id:2, value: "I am sorry, I do not have enough information to answer.", selected: false, author: "crowd-1"},
-    {id:3, value: "I found many options would you like to hear few examples?", selected: false, author: "crowd-1"},
-    {id:4, value: "Great! I love sweets!", selected: false, author: "crowd-1"}
-    ];
-
-
 const navbarInstance = (
   <Navbar inverse fixed-top>
     <Navbar.Header>
@@ -81,33 +64,42 @@ var MsgAnnouncer = React.createClass({
 var HistoryView = React.createClass({
     getDefaultProps() {
         return {
-            author: '',
+            role: 'COMPULSORY_assistant_or_user',
             msgs:[],
+            onSelectedReason: function (action_text) {
+                console.log('NotImplemented callback onSelectedReason: ', action_text)
+            },
         }
     },
     getInitialState() {
         return { selections: {},}
     },
     handleSelectItem(m) {
-        console.log('Selected action key: ' + m.key + ' and text ' + m.value);
-        this.props.onSelectedAction(m.value);
+        var text = m.target.firstChild.nodeValue
+        // FIXME pass the key more sensible way
+        var turn_role = m.target.parentElement.childNodes[0].firstChild.nodeValue
+        console.log('Selected reason turn_role: ' + turn_role + ' and text ' + text)
+        this.props.onSelectedReason(text)
         // make it multiple option
-        var selections = this.state.selections
-        selections[m.key] = !selections[m.key]
-        this.state.selections = selections
+        var {selections} = this.state
+        selections[turn_role] = !selections[turn_role]
+        this.setState({selections: selections})
     },
-    createActionItem(m) {
-        var text_author = this.props.author == m.author ? 'You' : 'System';
-        return (<ListGroupItem key={m.turn} active={this.state.selections[m.key] ? true: false} header={text_author} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
+    createHistoryItem(m) {
+        var turn_role = m.turn + ':' + (this.props.role == m.role ? 'You' : 'System');
+        console.log('DEBUG createHistoryItem turn_role ', turn_role, 'props.role', this.props.role, m.role)
+        return (<ListGroupItem key={turn_role} active={this.state.selections[turn_role] ? true: false} header={turn_role} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
     },
     render() {
+        console.log('selections: ', this.state.selections)
+        console.log('msgs', this.props.msgs)
         return (
             <div className="actionselectionview">
               <div className="column-header">
                 <h3>Select Reasons</h3>
               </div>
               <ListGroup>
-                  {this.props.msgs.map(this.createActionItem, this)}
+                  {this.props.msgs.map(this.createHistoryItem, this)}
               </ListGroup>
             </div>
         )
@@ -139,13 +131,18 @@ ActionSelectView = React.createClass({
             new_action: '',
         }
     },
+    componentDidMount() {
+        console.log('ActionSelect mounted. Actions:', this.props.actions)
+    },
     handleSelectItem(m) {
-        console.log('Selected action key: ' + m.key + ' and text ' + m.value);
-        this.props.onSelectedAction(m.value);
+        var text = m.target.firstChild.nodeValue
+        console.log('Selected action text: ' + text)
+        this.props.onSelectedAction(text);
         // make it single option
-        var key = m.key
-        var selections = {key: true}
-        this.state.selections = selections
+        var {selections} = this.state
+        selections = {}
+        selections[text] = true
+        this.setState({selections: selections})
     },
     validationNew(send_msgs = false) {
         let text = this.state.new_action.trim();
@@ -175,10 +172,11 @@ ActionSelectView = React.createClass({
     },
 
     createActionItem(m) {
-        return (<ListGroupItem key={m.text} active={this.state.selections[m.key] ? true: false} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
+        return (<ListGroupItem key={m.text} active={this.state.selections[m.text] ? true: false} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
     },
 
     render() {
+        console.log('Render(): selection:', this.state.selections)
         return (
             <div clas="actionview">
                 <div className="column-header">
@@ -283,9 +281,8 @@ var ActionSelect = React.createClass({
 
       // add actions_valid: []
   },
-  componentDidMount() { 
-    console.log('ActionSelect mounted');
-
+  componentDidMount() {
+    console.log('ActionSelect mounted: dialog_id ', this.props.dialog_id, ' role ', this.props.role, 'nick', this.props.nick)
     db = {"FIXME": "FIXME"};
     // $.ajax({
     //   url: '/api/dialog/db/dstc2',
@@ -376,7 +373,7 @@ var ActionSelect = React.createClass({
         <Grid>
           <Row className="show-grid">
             <Col xs={4} md={4}>
-              <HistoryView msgs={this.state.history} />
+              <HistoryView msgs={this.state.history} role={this.props.role} />
             </Col>
             <Col xs={4} md={4}>
               <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} selectActionHandler={this._actionsSelected} newActionHandler={this._userSuggestedAction}/>

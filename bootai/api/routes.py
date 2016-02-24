@@ -117,12 +117,12 @@ def leave(msg):
 
 def send_history(history: Utterance, dialog_id: str, namespace='/api'):
     logger.debug('history: %s', history if len(history) < 3 else history[0:2])
-    history_msg = [{'text': u.text, 'author': u.author, 'turn': u.turn} for u in history]
+    history_msg = [{'text': u.text, 'role': str(u.role), 'turn': u.turn} for u in history]
     socketio.emit('history', history_msg, room=get_dialog_key(dialog_id=dialog_id), namespace=namespace)
 
 
 class TurnCallback(object):
-    def __init__(self, dialog: Dialog, role: Role, timeout_s=2000):
+    def __init__(self, dialog: Dialog, role: Role, timeout_s=2):
         self.dialog = dialog
         self.role = role
         self.proposed_actions = mdl.predict_actions(self.dialog, self.role)

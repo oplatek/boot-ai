@@ -70,15 +70,17 @@ class Role(JsonEncodable, Enum):
 
 class Response(object):
     def __init__(self, dialog_id: str, turn_to_appear: int, role: str,
-                callback, system_winner, num_respondents=1):
+                callback, alternatives, num_respondents=1):
         self.dialog_id = dialog_id
         self.role = role
         self.turn = turn_to_appear
         self.num_respondents = num_respondents
         self._callback_f = callback
-        self._system_winner = system_winner
+        self.alternatives = alternatives
+        # We suppose that the most probable action is at first position
+        self._system_winner = alternatives[0]
         self.called = False
-        self.alternatives = Counter()
+        self.votes = Counter()
 
     def __call__(self):
         self._call_back(self._system_winner)
@@ -91,16 +93,16 @@ class Response(object):
         self._callback_f(selected)
 
     def elect(self):
-        # We assume that the number of possile answers can be inifinite
+        # We assume that the number of possible answers can be infinite
         # but the number of respondents is small.
         n_max = self.num_respondents
-        most_common = self.alternatives.most_common(2)
+        most_common = self.votes.most_common(2)
 
         valid = False
         if len(most_common) == 1:
             valid = most_common[0][1] >= (n_max / 2)
         elif len(most_common) == 2:
-            to_expect = n_max - len(self.alternatives)
+            to_expect = n_max - len(self.votes)
             valid = most_common[0][1] > (most_common[1][1] + to_expect)
 
         if valid:
@@ -108,8 +110,10 @@ class Response(object):
         else:
             return None
 
-    def add_candidate(self, utt: 'Utterance') -> None:
-        self.alternatives[Utterance] += 1
+    def add_candidate(self, text_utterance) -> None:
+        matches = [u for u in self.alternatives if u.text == text_utterance]
+        assert len(matches) == 1, 'matches %s, alternatives %s, text %s' % (matches, self.alternatives, text_utterance)
+        self.votes[matches[0]] += 1
         winner = self.elect()
         if winner:
             self._call_back(winner)
@@ -133,6 +137,10 @@ class PriorityQueue(object):
         self.should_run = True
         self.pq = []
         self.entry_finder = {}
+
+    @property
+    def head(self):
+        return self.pq[0][1]
 
     def run_async(self):
         self._thread.start()
@@ -326,7 +334,7 @@ class Utterance(JsonEncodable):
         self._dialog = dialog
 
     def __hash__(self):
-        return hash((self.dialog_id, self.role, self.turn, self.text))
+        return hash((self._dialog.dialog_id, self.role, self.turn, self.text))
 
     def __eq__(self, other):
         return self.__hash__() == other.__hash__()

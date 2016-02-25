@@ -43,7 +43,8 @@ const navbarInstance = (
 );
 
 
-var MsgAnnouncer = React.createClass({
+var MsgAnnouncer;
+MsgAnnouncer= React.createClass({
   // TODO hide messages http://stackoverflow.com/questions/24171226/react-js-removing-element-from-dom-after-set-amount-of-time
   render:function() {
     var msgAlerts = this.props.msgs.map(function(m) {
@@ -62,29 +63,39 @@ var MsgAnnouncer = React.createClass({
   },
 });
 
+
 var HistoryView = React.createClass({
     getDefaultProps() {
         return {
+            active: true,
             role: 'COMPULSORY_assistant_or_user',
             msgs:[],
-            onSelectedReason: function (action_text) {
-                console.log('NotImplemented callback onSelectedReason: ', action_text)
+            onReasonsChanged: function(selection_dict) {
+                console.log('Register your callback to: ', action_text)
+
             },
         }
     },
     getInitialState() {
-        return { selections: {},}
+        return {
+            selections: {},
+        }
     },
     handleSelectItem(m) {
-        var text = m.target.firstChild.nodeValue
-        // FIXME pass the key more sensible way
-        var turn_role = m.target.parentElement.childNodes[0].firstChild.nodeValue
-        console.log('Selected reason turn_role: ' + turn_role + ' and text ' + text)
-        this.props.onSelectedReason(text)
-        // make it multiple option
-        var {selections} = this.state
-        selections[turn_role] = !selections[turn_role]
-        this.setState({selections: selections})
+        if(this.props.active) {
+            var text = m.target.firstChild.nodeValue
+            // FIXME pass the key more sensible way
+            var turn_role = m.target.parentElement.childNodes[0].firstChild.nodeValue
+            console.log('Selected reason turn_role: ' + turn_role + ' and text ' + text)
+            // make it multiple option
+            var {selections} = this.state
+            selections[turn_role] = !selections[turn_role]
+            this.setState({selections: selections})
+            this.props.onReasonsChanged(this.state.selections)
+        } else {
+            // TODO make it visually understandable
+            console.log('Cannot change the item HistoryView changes are disabled')
+        }
     },
     createHistoryItem(m) {
         var turn_role = m.turn + ':' + (this.props.role == m.role ? 'You' : 'System');
@@ -107,10 +118,12 @@ var HistoryView = React.createClass({
       },
 });
 
+
 var ActionSelectView;
 ActionSelectView = React.createClass({
     getDefaultProps() {
         return {
+            active: true,
             actions: [],
             collect_new: true,
             handleNewActionSubmit: function () {
@@ -129,7 +142,7 @@ ActionSelectView = React.createClass({
     getInitialState() {
         return {
             selections: {},
-            new_action: '',
+            suggested_action: '',
         }
     },
     componentDidMount() {
@@ -146,7 +159,7 @@ ActionSelectView = React.createClass({
         this.setState({selections: selections})
     },
     validationNew(send_msgs = false) {
-        let text = this.state.new_action.trim();
+        let text = this.state.suggested_action.trim();
         let notify = this.props.notifyUser;
         if (text.length < 2) {
             if (send_msgs) notify({'text': 'Do not submit empty message!', 'style': 'error'});
@@ -162,19 +175,23 @@ ActionSelectView = React.createClass({
         return 'success';
     },
     handleNewChange(e) {
-        this.setState({new_action: e.target.value});
+        this.setState({suggested_action: e.target.value});
     },
-    handleNewActionSubmit() {
-        e.preventDefault();
-        var status = validationNew(send_msgs = true);
-        var new_text = this.state.new_action.trim();
-        this.props.onNewAction(new_text);
+    handleKeyPress(target) {
+        if(target.charCode==13) {
+            var status = this.validationNew(true);
+            if (status == 'success') {
+                var new_text = this.state.suggested_action.trim();
+                console.log('Suggested action validated', new_text);
+                this.props.onNewAction(new_text);
+            }
+        }
     },
     createActionItem(m) {
         return (<ListGroupItem key={m.text} active={this.state.selections[m.text] ? true: false} onClick={this.handleSelectItem}>{m.text}</ListGroupItem>)
     },
     render() {
-        console.log('Render(): selection:', this.state.selections)
+        //console.log('Render(): selection:', this.state.selections)
         return (
             <div clas="actionview">
                 <div className="column-header">
@@ -185,14 +202,14 @@ ActionSelectView = React.createClass({
                 </ListGroup>
                 {this.props.collect_new ?
                     <Input type="text"
-                           value={this.state.new_action}
+                           value={this.state.suggested_action}
                            placeholder="If none of actions above don't fit contribute one!"
-                           label="Suggested reply"
+                           label="Suggest action"
                            bsStyle={this.validationNew()}
                            groupClassName="group-class"
                            labalClassName="label-class"
                            onChange={this.handleNewChange}
-                           onsubmit={this.handleNewActionSubmit}
+                           onKeyPress={this.handleKeyPress}
                     />
                     : <Well>Choose one from the above actions</Well>
                 }
@@ -200,81 +217,90 @@ ActionSelectView = React.createClass({
     },
 });
 
-var DbView = React.createClass({
-  getInitialState() {
-    return {db_filtered: this._get_default_db()};
-  },
-  _get_default_db() {
-    return [
-      {
-          "phone": "01223 461661",
-          "pricerange": "expensive",
-          "addr": "31 newnham road newnham",
-          "area": "west",
-          "food": "indian",
-          "postcode": "not available",
-          "name": "india house"
-      },
-      {
-          "addr": "cambridge retail park newmarket road fen ditton",
-          "area": "east",
-          "food": "italian",
-          "phone": "01223 323737",
-          "pricerange": "moderate",
-          "postcode": "c b 5 8 w r",
-          "name": "pizza hut fen ditton"
-      }
-    ];
-  },
-  render() {
-    return (
-      <div className="dbview">
-        <div className="column-header">
-          <h3>Find and Mark Info</h3>
-        </div>
-        <Table hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Restaurant</th>
-                <th>Price Range</th>
-                <th>Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>Ask</td>
-                <td>Medium</td>
-                <td>12 Bridge St, Cambridge</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Pizza place</td>
-                <td>Cheap</td>
-                <td>3 Churchill St, Cambridge</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>Kebab place</td>
-                <td>Cheap</td>
-                <td>Queen Mary Sq, Cambridge</td>
-              </tr>
-            </tbody>
-          </Table>
-        </div>);
-  },
+
+var DbView;
+DbView = React.createClass({
+    getInitialState() {
+        return {db_filtered: this._get_default_db()};
+    },
+    getDefaultProps() {
+        return {
+            active: true,
+        }
+    },
+    _get_default_db() {
+        return [
+            {
+                "phone": "01223 461661",
+                "pricerange": "expensive",
+                "addr": "31 newnham road newnham",
+                "area": "west",
+                "food": "indian",
+                "postcode": "not available",
+                "name": "india house"
+            },
+            {
+                "addr": "cambridge retail park newmarket road fen ditton",
+                "area": "east",
+                "food": "italian",
+                "phone": "01223 323737",
+                "pricerange": "moderate",
+                "postcode": "c b 5 8 w r",
+                "name": "pizza hut fen ditton"
+            }
+        ];
+    },
+    render() {
+        return (
+            <div className="dbview">
+                <div className="column-header">
+                    <h3>Find and Mark Info</h3>
+                </div>
+                <Table hover>
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Restaurant</th>
+                        <th>Price Range</th>
+                        <th>Address</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Ask</td>
+                        <td>Medium</td>
+                        <td>12 Bridge St, Cambridge</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Pizza place</td>
+                        <td>Cheap</td>
+                        <td>3 Churchill St, Cambridge</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Kebab place</td>
+                        <td>Cheap</td>
+                        <td>Queen Mary Sq, Cambridge</td>
+                    </tr>
+                    </tbody>
+                </Table>
+            </div>);
+    },
 });
 
-var ActionSelect = React.createClass({
+
+var ActionSelect;
+ActionSelect= React.createClass({
   getInitialState() {
     return {
-      stats: {correct: 0, created: 0, errors: 0}, 
-      msgs:[],
-      actions: [],
-      new_actions: [],
-      action_selected: [],
-      history: [],
+        active: true,
+        stats: {correct: 0, created: 0, errors: 0},
+        msgs:[],
+        actions: [],
+        history: [],
+        turn_reasons_from_history: [],
     };
 
       // add actions_valid: []
@@ -297,64 +323,84 @@ var ActionSelect = React.createClass({
 
     socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
     socket.on('connect', function() { 
-      socket.emit('join_dialog', {}); 
+      socket.emit('join_dialog', {});
       console.log('socketio.emit: join_dialog');
     });
     socket.on('redirect', function(msg){ window.location = msg.url; });
     socket.on('messages', this._messagesReceive);
     socket.on('history', this._historyReceive);
     socket.on('actions', this._actionsRecieve);
-    socket.on('new_actions', this._new_actionsRecieve);
-    socket.on('timeout_select', this._timeout_select);
-    socket.on('timeout_turn', this._timeout_turn);
+    socket.on('add_actions', this._additional_actionReceive);
+    socket.on('timeout_turn', this._finish_selection);
   },
   _messagesReceive(new_msg) {
     var {msgs} = this.state;
     msgs.push(new_msg);
     if (msgs.length > 3) {
       msgs.shift()
-    };
+    }
     this.setState({msgs});
     console.log('Updated msgs:', msgs, 'after new_msg added', new_msg);
   },
   _historyReceive(new_history) {
-    var {history} = this.state;
-    history = new_history;
-    this.setState({history});
-    if (history.length > 0) {
-      console.log('New history received .. last msg', history[history.length-1]);
-    } else {
-      console.log('Empty history', new_history);
-    }
+      var {history} = this.state;
+      history = new_history;
+      this.setState({history});
+      if (history.length > 0) {
+         console.log('New history received .. last msg', history[history.length-1]);
+      } else {
+         console.log('Empty history', new_history);
+      }
   },
   _actionsRecieve(proposed_actions) {
-    var {actions} = this.state;
-    actions = proposed_actions;
-    this.setState({actions});
-    if (actions.length > 0) {
-      console.log('Actions[0]', actions[0]);
-    } else {
-      console.log('No actions were received!', actions);
-    }
+      // New turn marked by receiving new actions to choose from
+      var active = true;
+      this.setState({active});
+
+      var {actions} = this.state;
+      actions = proposed_actions;
+      this.setState({actions});
+      if (actions.length > 0) {
+        console.log('Actions[0]', actions[0]);
+      } else {
+        console.log('No actions were received!', actions);
+      }
   },
   _actionsSelected(text) {
-      console.log('Action selected: ', text);
-      socket.emit('action_selected', {'role': this.props.role, 'text': text});
+      var msg = {role: this.props.role, text: text};
+      console.log('Action selected: ', msg);
+      socket.emit('action_selected', msg)
   },
   _userSuggestedAction(action_text) {
-      console.log('User suggested action ', action_text);
+      console.log('User suggested new action ', action_text);
+      // TODO disable choosing other action then suggested?
+      socket.emit('new_action', {text: action_text, role: this.props.role, author: this.props.nick})
   },
-  _new_actionsReceive(msgs) {
-    console.log('receive actions', msgs);
-    // TODO append it to the actions already displayed by action select
+  _additional_actionReceive(new_action) {
+      console.log('Additional action recieved', new_action);
+      var {actions} = this.state;
+      actions.push(new_action);
+      this.setState({actions});
   },
-  _timeout_select(msgs) {
-    console.log('timeout select');
+  _finish_selection(msgs) {
+      console.log('Finish selection', msgs);
+      var active = false;
+      var msg = {'style': 'info', 'id': 'local_messages',
+          'text': 'Turn finished. Wait for new system response and new actions to choose from!'};
+      this._messagesReceive(msg);
+      this.state.setState(active);
   },
-  _timeout_turn(msgs) {
-    console.log('timeout turn');
+  _reasons_update(history_dict) {
+      var turn_reasons_from_history = [];
+      for (var key in history_dict) {
+          if (history_dict.hasOwnProperty(key) && (history_dict[key])) {
+            turn_reasons_from_history.push(key)
+          }
+      }
+      this.setState(turn_reasons_from_history)
   },
   render() {
+      // FIXME grid so it has chance to have enough space
     return (
       <div>
         <div>
@@ -363,22 +409,19 @@ var ActionSelect = React.createClass({
         <Grid>
           <Row className="show-grid">
             <Col xs={4} md={4}>
-              <HistoryView msgs={this.state.history} role={this.props.role} />
+              <HistoryView active={this.state.active} msgs={this.state.history} onReasonsChanged={this._reasons_update} role={this.props.role} />
             </Col>
             <Col xs={4} md={4}>
-              <ActionSelectView actions={this.state.actions} new_actions={this.state.new_actions} onSelectedAction={this._actionsSelected} onNewAction={this._userSuggestedAction} notifyUser={this._messagesReceive} />
+              <ActionSelectView active={this.state.active} actions={this.state.actions} new_actions={this.state.new_actions} onSelectedAction={this._actionsSelected} onNewAction={this._userSuggestedAction} notifyUser={this._messagesReceive} />
             </Col>
             <Col xs={4} md={4}>
-              <DbView/>
+              <DbView active={this.state.active} />
             </Col>
           </Row>
         </Grid>
       </div>
       );
-
-
   },
-    
 });
 
 

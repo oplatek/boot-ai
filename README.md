@@ -10,17 +10,16 @@ Todos & remarks
 - UI design
     - Combine react and bootstrap http://react-bootstrap.github.io/components.html
     - React official doc is enough: http://facebook.github.io/react/docs/thinking-in-react.html
-    - TODO load data from flask via websockets
+    - TODO load data from flask via websockets [DONE]
     - TODO login and integration with crowdflower
     - how to get immediate feedback
-    - Select one from list http://stackoverflow.com/questions/27512180/reactjs-onclick-event-how-to-select-a-specific-button-from-a-list
 - Model - DB columns, different attention - I need to use columns
     - negative examples - distribute to (no one selected actions - 0 probability, selected action receives probability of changing the "future" - computed after dialog using another & reversed RNN choosing only from the selected actions
 - if support for proper authentication wanted look at fbone or at https://github.com/gae-init/gae-init/blob/master/main/auth/auth.py
 - mail smtp error handler. setup email bootai-admin@gmail.com and use this tutorial http://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xi-email-support
-- TODO manage session via decorators and invalidate sessions if role and dialogue is not valid anymore and make it expire quite soon e.g. after few hours http://stackoverflow.com/questions/11783025/is-there-an-easy-way-to-make-sessions-timeout-in-flask
-- implement CountDown and TIMEOUTS for waiting on other side action-selection using https://github.com/shanealynn/async_flask/blob/master/application.py
-- Example app with eventlet side pushing of notification https://github.com/miguelgrinberg/Flask-SocketIO/blob/master/example/app.py
+- TODO manage session via decorators and invalidate sessions if role and dialogue is not valid anymore and make it expire quite soon e.g. after few hours http://stackoverflow.com/questions/11783025/is-there-an-easy-way-to-make-sessions-timeout-in-flask [DONE]
+- implement CountDown and TIMEOUTS for waiting on other side action-selection using https://github.com/shanealynn/async_flask/blob/master/application.py [DONE-partial]
+- Example app with eventlet side pushing of notification https://github.com/miguelgrinberg/Flask-SocketIO/blob/master/example/app.py [DONE]
 - todo at forms and search http://react-bootstrap.github.io/components.html#forms
 
 - TODO TESTS

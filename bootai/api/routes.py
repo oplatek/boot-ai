@@ -49,27 +49,27 @@ def get_dialog_key(dialog_id=None):
 @socketio.on('new_action', namespace='/api')
 def new_action(msg):
     role_room = get_roledialog_key()
+    dialog, role = ddb.get_dialog(session['dialog']), getattr(Role, session['role'])
+    assert msg['role'] == str(role), '%s vs %s' % (msg['role'], role)
+    response = pq.head
+    u = Utterance(response.turn, role, msg['author'], msg['text'], dialog)
+    response.alternatives.append(u)
+    # FIXME Now user can potentially two times for his action
+    response.add_candidate(u.text)
 
     emit('messages',
          {'style': 'info',
           'id': get_msg_key(),
           'text': 'New action was suggested. Please, condsider it as alternative for your choice'},
          room=role_room)
-    print('TODO reset timer and postpone timeout')
-    print('validate msg', msg)
-    emit('new_action', msg, room=role_room())
+    emit('new_action', {'text': u.text, 'selected': u.selected}, room=role_room)
 
 
 @socketio.on('action_selected', namespace='/api')
 def action_selected(msg):
-    logger.info('Action selected', msg)
-    # TODO implement voting if it is enough
-    timeout_select, timeout_turn = True, True
-    # timeout_select, timeout_turn, user_messages = ddb.record_action_selection(msg)
-    if timeout_select:
-        emit('timeout_select', '', room=get_roledialog_key())
-    if timeout_turn:
-        emit('timeout_turn', '', room=get_roledialog_key())
+    # FIXME send dialog_id & turn and check it
+    logger.info('Action selected: %s', msg)
+    pq.head.add_candidate(msg['text'])
 
 
 @socketio.on('join_dialog', namespace='/api')
@@ -149,16 +149,21 @@ class TurnCallback(object):
 
             cb_next = TurnCallback(self.dialog, self.role.next(), timeout_s=self.timeout_s)
             cb_next.register_response()
-        else:
-            logger.warn("Model for role %s in dialog %s generated no proposed actions", self.role,
-                        self.dialog.dialog_id)
+            # # FIXME handle from callback
+            # if timeout_select:
+            #     emit('timeout_select', '', room=get_roledialog_key())
+            # if timeout_turn:
+            #     emit('timeout_turn', '', room=get_roledialog_key())
+            #     else:
+            #         logger.warn("Model for role %s in dialog %s generated no proposed actions", self.role,
+            #                     self.dialog.dialog_id)
 
     def register_response(self):
         # TODO we suppose that proposed_action[0] is the best
         r = db.Response(self.dialog.dialog_id,
                         self.dialog.last_turn_finished + 1, self.role,
                         self,
-                        self.proposed_actions[0])
+                        self.proposed_actions)
         pq.register(r, self.timeout_s)
 
 

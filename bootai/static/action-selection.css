@@ -3,6 +3,11 @@ body {
   padding-bottom: 30px;
 }
 
+.react-bs-select-all {
+    /* disable select all/select none for table */
+    display: none;
+}
+
 /* TODO how to combine css with react-bootstrap */
 /* .theme-dropdown .dropdown-menu { */
 /*   position: static; */

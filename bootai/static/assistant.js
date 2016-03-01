@@ -18,7 +18,6 @@ var Col = ReactBootstrap.Col;
 var Input = ReactBootstrap.Input;
 
 var socket;
-var db;
 
 
 // TODO show help locally
@@ -222,55 +221,37 @@ ActionSelectView = React.createClass({
 var DbView;
 // row selection http://allenfang.github.io/react-bootstrap-table/example.html
 DbView = React.createClass({
-    getInitialState() {
-        return {db_filtered: this.props.data};
-    },
     getDefaultProps() {
         return {
             active: true,
-            data:[
-                {
-                    "phone": "01223 461661",
-                    "pricerange": "expensive",
-                    "addr": "31 newnham road newnham",
-                    "area": "west",
-                    "food": "indian",
-                    "postcode": "not available",
-                    "name": "india house"
-                },
-                {
-                    "addr": "cambridge retail park newmarket road fen ditton",
-                    "area": "east",
-                    "food": "italian",
-                    "phone": "01223 323737",
-                    "pricerange": "moderate",
-                    "postcode": "c b 5 8 w r",
-                    "name": "pizza hut fen ditton"
-                }
-            ],
-            columns:[
-                {'name':'phone', text:'Phone', isKey:true},
-                {'name':'pricerange', text:'Price Range'},
-                {'name':'addr', text:'Address'},
-                {'name':'area', text:'Area'},
-                {'name':'food', text:'Food'},
-                {'name':'postcode', text:'Postcode'},
-                {'name':'name', text:'Name'},
-            ],
+            data:[],
+            columns:[],
+            onSelectRow: function(row, isSelected) {
+                console.log('Row: ', row, ' isSelected: ', isSelected)
+            },
+            width: 600,
         }
     },
     createColumn(column_json) {
         var isKey = column_json['isKey']
-        return (<TableHeaderColumn isKey={isKey} dataField={column_json.name}>{column_json.text}</TableHeaderColumn>);
+        var col_width = this.props.width / this.props.columns.length;
+        console.log('debug col_width: ', col_width);
+        return (<TableHeaderColumn width={String(col_width)} isKey={isKey} key={String(column_json)} dataField={column_json.name} filter={{type: "TextFilter", placeholder: "Filter values"}}>{column_json.text}</TableHeaderColumn>);
     },
     render() {
+        var selectRowProp = {
+          mode: "checkbox",
+          clickToSelect: true,
+          bgColor: "rgb(238, 193, 213)",
+          onSelect: this.props.onSelectRow,
+        };
         return (
         <div className="dbview">
             <div className="column-header">
                 <h3>Find and Mark Info</h3>
             </div>
-              <BootstrapTable data={this.state.db_filtered} striped={true} hover={true}>
-                  {this.props.columns.map(this.createColumn, this)}
+              <BootstrapTable data={this.props.data} striped={true} hover={true} selectRow={selectRowProp}>
+                  {this.props.columns.filter(function(c) {return !c['hide']; }).map(this.createColumn, this)}
               </BootstrapTable>
         </div>);
     },
@@ -286,6 +267,36 @@ ActionSelect= React.createClass({
         msgs:[],
         actions: [],
         history: [],
+        columns:[
+            {'name':'phone', text:'Phone', isKey:true},
+            {'name':'pricerange', text:'Price Range'},
+            {'name':'addr', text:'Address'},
+            {'name':'area', text:'Area'},
+            {'name':'food', text:'Food'},
+            {'name':'postcode', text:'Postcode', hide: true},
+            {'name':'name', text:'Name'},
+        ],
+        db_data:[
+            {
+                "phone": "01223 461661",
+                "pricerange": "expensive",
+                "addr": "31 newnham road newnham",
+                "area": "west",
+                "food": "indian",
+                "postcode": "not available",
+                "name": "india house"
+            },
+            {
+                "addr": "cambridge retail park newmarket road fen ditton",
+                "area": "east",
+                "food": "italian",
+                "phone": "01223 323737",
+                "pricerange": "moderate",
+                "postcode": "c b 5 8 w r",
+                "name": "pizza hut fen ditton"
+            }
+        ],
+        db_selected: {},
         turn_reasons_from_history: [],
     };
 
@@ -293,7 +304,6 @@ ActionSelect= React.createClass({
   },
   componentDidMount() {
     console.log('ActionSelect mounted: dialog_id ', this.props.dialog_id, ' role ', this.props.role, 'nick', this.props.nick)
-    db = {"FIXME": "FIXME"};
     // $.ajax({
     //   url: '/api/dialog/db/dstc2',
     //   dataType: 'json',
@@ -353,9 +363,20 @@ ActionSelect= React.createClass({
       }
   },
   _actionsSelected(text) {
-      var msg = {role: this.props.role, text: text};
-      console.log('Action selected: ', msg);
-      socket.emit('action_selected', msg)
+      var filtered_keys = Object.keys(this.state.db_selected).filter(function(el) {return this.state.db_selected[el]; }.bind(this));
+      if (filtered_keys.length == 0) {
+          this._messagesReceive({'style': 'info', 'id': 'local_messages' + String(Date.now()), 'text': 'You have provided no information from database'});
+      }
+      if (this.state.turn_reasons_from_history.length == 0) {
+          this._messagesReceive({'style': 'danger', 'id': 'local_messages' + String(Date.now()), 'text': 'Select reason for your actions from history before submitting!'});
+      } else {
+          var reasons =  this.state.turn_reasons_from_history.map(function(r) {return this.state.history[r];});
+          var msg = {role: this.props.role, text: text,
+              reasons_ids: this.state.turn_reasons_from_history,
+              reasons: reasons,};
+          console.log('action_selected: ', msg);
+          socket.emit('action_selected', msg)
+      }
   },
   _userSuggestedAction(action_text) {
       console.log('User suggested new action ', action_text);
@@ -371,7 +392,7 @@ ActionSelect= React.createClass({
   _finish_selection(msgs) {
       console.log('Finish selection', msgs);
       var active = false;
-      var msg = {'style': 'info', 'id': 'local_messages',
+      var msg = {'style': 'info', 'id': 'local_messages' + String(Date.now()),
           'text': 'Turn finished. Wait for new system response and new actions to choose from!'};
       this._messagesReceive(msg);
       this.state.setState(active);
@@ -385,23 +406,25 @@ ActionSelect= React.createClass({
       }
       this.setState(turn_reasons_from_history)
   },
+  _row_selected(row, selected) {
+     this.state.db_selected[row] = selected;
+  },
   render() {
-      // FIXME grid so it has chance to have enough space
     return (
       <div>
         <div>
           <MsgAnnouncer msgs={this.state.msgs} stats={this.state.stats} />
         </div>
-        <Grid>
+        <Grid fluid="true">
           <Row className="show-grid">
-            <Col xs={4} md={4}>
+              <Col xs={12} lg={6}>
+                  <DbView active={this.state.active} onSelectRow={this._row_selected} data={this.state.db_data} columns={this.state.columns}/>
+              </Col>
+            <Col xs={6} lg={3}>
               <HistoryView active={this.state.active} msgs={this.state.history} onReasonsChanged={this._reasons_update} role={this.props.role} />
             </Col>
-            <Col xs={4} md={4}>
+            <Col xs={6} lg={3}>
               <ActionSelectView active={this.state.active} actions={this.state.actions} new_actions={this.state.new_actions} onSelectedAction={this._actionsSelected} onNewAction={this._userSuggestedAction} notifyUser={this._messagesReceive} />
-            </Col>
-            <Col xs={4} md={4}>
-              <DbView active={this.state.active} />
             </Col>
           </Row>
         </Grid>

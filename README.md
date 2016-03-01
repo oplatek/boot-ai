@@ -21,6 +21,9 @@ Todos & remarks
 - implement CountDown and TIMEOUTS for waiting on other side action-selection using https://github.com/shanealynn/async_flask/blob/master/application.py [DONE-partial]
 - Example app with eventlet side pushing of notification https://github.com/miguelgrinberg/Flask-SocketIO/blob/master/example/app.py [DONE]
 - todo at forms and search http://react-bootstrap.github.io/components.html#forms
+- Load data from data.dstc2.train.json
+- Lead table e.g. by https://github.com/facebook/fixed-data-table/tree/master/dist & http://facebook.github.io/fixed-data-table/
+    - or better http://allenfang.github.io/react-bootstrap-table/
 
 - TODO TESTS
     - 1. login 2. assign new dialog 3. check that 

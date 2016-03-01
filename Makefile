@@ -18,6 +18,10 @@ cp/bootai-static:
 	wget https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.28.2/react-bootstrap.js -O bootai/static/lib/react-bootstrap.js
 	wget https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.js -O bootai/static/lib/jquery.js
 	wget https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.js -O bootai/static/lib/socketio.js
+	wget https://raw.githubusercontent.com/AllenFang/react-bootstrap-table/master/dist/react-bootstrap-table.js -O bootai/static/lib/react-boostrap-table.js
+	wget https://raw.githubusercontent.com/AllenFang/react-bootstrap-table/master/css/react-bootstrap-table-all.min.css -O bootai/static/lib/react-bootstrap-table-all.min.css
+	wget https://raw.githubusercontent.com/AllenFang/react-bootstrap-table/master/css/toastr.css -O bootai/static/lib/toastr.css
+	@echo "TODO fix version of react-boostrap-table to SHA commit"
 	@echo "Download NOT minimfied version of libraries!"
 	touch $@
 

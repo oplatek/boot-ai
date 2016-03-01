@@ -5,6 +5,7 @@
 
     {% block css_style %}
     <link rel="stylesheet" href="{{ url_for('static', filename='action-selection.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='lib/react-bootstrap-table-all.min.css') }}">
     {% endblock %}
 
     {% block js_top %}
@@ -37,6 +38,7 @@
   {% block js_btm %}
     <script src="{{ url_for('static', filename='lib/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='lib/socketio.js') }}"></script>
+    <script src="{{ url_for('static', filename='lib/react-boostrap-table.js') }}"></script>
     <script type="text/babel" src="{{ url_for('static', filename='assistant.js') }}"></script>
   {% endblock %}
 

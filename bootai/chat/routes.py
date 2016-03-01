@@ -70,7 +70,7 @@ def assign():
             flash('You have a role %s and dialog already assigned. If you create a new one you cannot finish the current one!' % role, 'error')
             return render_template('assign.html', form=form, role=role, dialog_id=dialog_id)
         else:
-            return render_template('assign.html', form=form, role=role, dialog_id=dialog_id)
+            return render_template('assign.html', form=form)
     elif form.validate_on_submit():
         current_app.logger.info('Assigned form validated')
         role, session['dialog'] = ddb.assign_role_dialog(session['nick'])

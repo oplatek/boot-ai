@@ -1,5 +1,5 @@
-// TODO create components which can dynamically display the json data.
-
+var BootstrapTable = window.BootstrapTable;
+var TableHeaderColumn = window.TableHeaderColumn;
 
 var Nav = ReactBootstrap.Nav;
 var NavItem = ReactBootstrap.NavItem;
@@ -19,6 +19,7 @@ var Input = ReactBootstrap.Input;
 
 var socket;
 var db;
+
 
 // TODO show help locally
 const navbarInstance = (
@@ -219,74 +220,59 @@ ActionSelectView = React.createClass({
 
 
 var DbView;
+// row selection http://allenfang.github.io/react-bootstrap-table/example.html
 DbView = React.createClass({
     getInitialState() {
-        return {db_filtered: this._get_default_db()};
+        return {db_filtered: this.props.data};
     },
     getDefaultProps() {
         return {
             active: true,
+            data:[
+                {
+                    "phone": "01223 461661",
+                    "pricerange": "expensive",
+                    "addr": "31 newnham road newnham",
+                    "area": "west",
+                    "food": "indian",
+                    "postcode": "not available",
+                    "name": "india house"
+                },
+                {
+                    "addr": "cambridge retail park newmarket road fen ditton",
+                    "area": "east",
+                    "food": "italian",
+                    "phone": "01223 323737",
+                    "pricerange": "moderate",
+                    "postcode": "c b 5 8 w r",
+                    "name": "pizza hut fen ditton"
+                }
+            ],
+            columns:[
+                {'name':'phone', text:'Phone', isKey:true},
+                {'name':'pricerange', text:'Price Range'},
+                {'name':'addr', text:'Address'},
+                {'name':'area', text:'Area'},
+                {'name':'food', text:'Food'},
+                {'name':'postcode', text:'Postcode'},
+                {'name':'name', text:'Name'},
+            ],
         }
     },
-    _get_default_db() {
-        return [
-            {
-                "phone": "01223 461661",
-                "pricerange": "expensive",
-                "addr": "31 newnham road newnham",
-                "area": "west",
-                "food": "indian",
-                "postcode": "not available",
-                "name": "india house"
-            },
-            {
-                "addr": "cambridge retail park newmarket road fen ditton",
-                "area": "east",
-                "food": "italian",
-                "phone": "01223 323737",
-                "pricerange": "moderate",
-                "postcode": "c b 5 8 w r",
-                "name": "pizza hut fen ditton"
-            }
-        ];
+    createColumn(column_json) {
+        var isKey = column_json['isKey']
+        return (<TableHeaderColumn isKey={isKey} dataField={column_json.name}>{column_json.text}</TableHeaderColumn>);
     },
     render() {
         return (
-            <div className="dbview">
-                <div className="column-header">
-                    <h3>Find and Mark Info</h3>
-                </div>
-                <Table hover>
-                    <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Restaurant</th>
-                        <th>Price Range</th>
-                        <th>Address</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Ask</td>
-                        <td>Medium</td>
-                        <td>12 Bridge St, Cambridge</td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Pizza place</td>
-                        <td>Cheap</td>
-                        <td>3 Churchill St, Cambridge</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>Kebab place</td>
-                        <td>Cheap</td>
-                        <td>Queen Mary Sq, Cambridge</td>
-                    </tr>
-                    </tbody>
-                </Table>
-            </div>);
+        <div className="dbview">
+            <div className="column-header">
+                <h3>Find and Mark Info</h3>
+            </div>
+              <BootstrapTable data={this.state.db_filtered} striped={true} hover={true}>
+                  {this.props.columns.map(this.createColumn, this)}
+              </BootstrapTable>
+        </div>);
     },
 });
 
